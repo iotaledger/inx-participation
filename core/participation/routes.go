@@ -2,7 +2,7 @@ package participation
 
 import (
 	"net/http"
-	
+
 	"github.com/labstack/echo/v4"
 
 	restapipkg "github.com/gohornet/hornet/pkg/restapi"
@@ -58,9 +58,8 @@ const (
 )
 
 func setupRoutes(e *echo.Echo) {
-	routeGroup := e.Group(APIRoute)
 
-	routeGroup.GET(RouteParticipationEvents, func(c echo.Context) error {
+	e.GET(RouteParticipationEvents, func(c echo.Context) error {
 		resp, err := getEvents(c)
 		if err != nil {
 			return err
@@ -69,7 +68,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.POST(RouteAdminCreateEvent, func(c echo.Context) error {
+	e.POST(RouteAdminCreateEvent, func(c echo.Context) error {
 
 		resp, err := createEvent(c)
 		if err != nil {
@@ -80,7 +79,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusCreated, resp)
 	})
 
-	routeGroup.GET(RouteParticipationEvent, func(c echo.Context) error {
+	e.GET(RouteParticipationEvent, func(c echo.Context) error {
 		resp, err := getEvent(c)
 		if err != nil {
 			return err
@@ -89,14 +88,14 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.DELETE(RouteAdminDeleteEvent, func(c echo.Context) error {
+	e.DELETE(RouteAdminDeleteEvent, func(c echo.Context) error {
 		if err := deleteEvent(c); err != nil {
 			return err
 		}
 		return c.NoContent(http.StatusNoContent)
 	})
 
-	routeGroup.GET(RouteParticipationEventStatus, func(c echo.Context) error {
+	e.GET(RouteParticipationEventStatus, func(c echo.Context) error {
 		resp, err := getEventStatus(c)
 		if err != nil {
 			return err
@@ -105,7 +104,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteOutputStatus, func(c echo.Context) error {
+	e.GET(RouteOutputStatus, func(c echo.Context) error {
 		resp, err := getOutputStatus(c)
 		if err != nil {
 			return err
@@ -113,7 +112,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteAddressBech32Status, func(c echo.Context) error {
+	e.GET(RouteAddressBech32Status, func(c echo.Context) error {
 		resp, err := getRewardsByAddress(c)
 		if err != nil {
 			return err
@@ -121,7 +120,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteAddressBech32Outputs, func(c echo.Context) error {
+	e.GET(RouteAddressBech32Outputs, func(c echo.Context) error {
 		resp, err := getOutputsByAddress(c)
 		if err != nil {
 			return err
@@ -129,7 +128,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteAdminActiveParticipations, func(c echo.Context) error {
+	e.GET(RouteAdminActiveParticipations, func(c echo.Context) error {
 		resp, err := getActiveParticipations(c)
 		if err != nil {
 			return err
@@ -137,7 +136,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteAdminPastParticipations, func(c echo.Context) error {
+	e.GET(RouteAdminPastParticipations, func(c echo.Context) error {
 		resp, err := getPastParticipations(c)
 		if err != nil {
 			return err
@@ -145,7 +144,7 @@ func setupRoutes(e *echo.Echo) {
 		return restapipkg.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	routeGroup.GET(RouteAdminRewards, func(c echo.Context) error {
+	e.GET(RouteAdminRewards, func(c echo.Context) error {
 		resp, err := getRewards(c)
 		if err != nil {
 			return err
