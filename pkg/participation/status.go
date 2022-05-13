@@ -54,8 +54,11 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...milest
 	pm.RLock()
 	defer pm.RUnlock()
 
-	index := pm.ledgerIndex
-	if len(milestone) > 0 {
+	index, err := pm.readLedgerIndex()
+	if err != nil {
+		return nil, err
+	}
+	if len(milestone) > 0 && milestone[0] < index {
 		index = milestone[0]
 	}
 

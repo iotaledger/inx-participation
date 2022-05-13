@@ -33,8 +33,11 @@ func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex .
 
 	eventIDs := pm.eventIDsWithoutLocking(StakingPayloadTypeID)
 
-	index := pm.ledgerIndex
-	if len(msIndex) > 0 && msIndex[0] < pm.ledgerIndex {
+	index, err := pm.readLedgerIndex()
+	if err != nil {
+		return nil, err
+	}
+	if len(msIndex) > 0 && msIndex[0] < index {
 		index = msIndex[0]
 	}
 
@@ -86,8 +89,11 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...milesto
 		return nil, ErrInvalidEvent
 	}
 
-	milestoneIndex := pm.ledgerIndex
-	if len(msIndex) > 0 && msIndex[0] < pm.ledgerIndex {
+	milestoneIndex, err := pm.readLedgerIndex()
+	if err != nil {
+		return nil, err
+	}
+	if len(msIndex) > 0 && msIndex[0] < milestoneIndex {
 		milestoneIndex = msIndex[0]
 	}
 

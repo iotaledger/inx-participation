@@ -2,6 +2,7 @@ package participation
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -27,7 +28,7 @@ type ProtocolParametersProvider func() *iotago.ProtocolParameters
 type NodeStatusProvider func() (confirmedIndex milestone.Index, pruningIndex milestone.Index)
 type MessageForMessageIDProvider func(messageID hornet.MessageID) (*ParticipationMessage, error)
 type OutputForOutputIDProvider func(outputID *iotago.OutputID) (*ParticipationOutput, error)
-type LedgerUpdatesProvider func(startIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool) error
+type LedgerUpdatesProvider func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool) error
 
 // ParticipationManager is used to track the outcome of participation in the tangle.
 type ParticipationManager struct {
@@ -39,8 +40,6 @@ type ParticipationManager struct {
 	messageForMessageIDFunc MessageForMessageIDProvider
 	outputForOutputIDFunc   OutputForOutputIDProvider
 	ledgerUpdatesFunc       LedgerUpdatesProvider
-
-	ledgerIndex milestone.Index
 
 	// holds the ParticipationManager options.
 	opts *Options
@@ -169,6 +168,16 @@ func (pm *ParticipationManager) CloseDatabase() error {
 		flushAndCloseError = err
 	}
 	return flushAndCloseError
+}
+
+func (pm *ParticipationManager) LedgerIndex() milestone.Index {
+	pm.RLock()
+	defer pm.RUnlock()
+	index, err := pm.readLedgerIndex()
+	if err != nil {
+		panic(err)
+	}
+	return index
 }
 
 func (pm *ParticipationManager) eventIDsWithoutLocking(eventPayloadType ...uint32) []EventID {
@@ -330,8 +339,13 @@ func (pm *ParticipationManager) calculatePastParticipationForEvent(event *Event)
 	events := make(map[EventID]*Event)
 	events[eventID] = event
 
+	ledgerIndex, err := pm.readLedgerIndex()
+	if err != nil {
+		return err
+	}
+
 	var innerErr error
-	err = pm.ledgerUpdatesFunc(event.CommenceMilestoneIndex(), func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool {
+	err = pm.ledgerUpdatesFunc(context.Background(), event.CommenceMilestoneIndex(), func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool {
 		for _, output := range created {
 			if err := pm.applyNewUTXOForEvents(index, output, events); err != nil {
 				innerErr = err
@@ -351,7 +365,7 @@ func (pm *ParticipationManager) calculatePastParticipationForEvent(event *Event)
 			return false
 		}
 
-		if index >= pm.ledgerIndex || index >= event.EndMilestoneIndex() {
+		if index >= ledgerIndex || index >= event.EndMilestoneIndex() {
 			// We are done filling up to the known ledgerIndex or the event ended
 			return false
 		}
@@ -371,7 +385,9 @@ func (pm *ParticipationManager) ApplyNewLedgerUpdate(index milestone.Index, crea
 	pm.Lock()
 	defer pm.Unlock()
 
-	pm.ledgerIndex = index
+	if err := pm.storeLedgerIndex(index); err != nil {
+		return err
+	}
 
 	acceptingEvents := filterEvents(pm.eventsWithoutLocking(), index, func(e *Event, index milestone.Index) bool {
 		return e.ShouldAcceptParticipation(index)

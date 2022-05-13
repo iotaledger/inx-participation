@@ -25,6 +25,34 @@ var (
 	ErrInvalidCurrentRewardsAmount           = errors.New("current rewards amount invalid")
 )
 
+// Status
+
+func ledgerIndexKey() []byte {
+	m := marshalutil.New(12)
+	m.WriteByte(ParticipationStoreKeyPrefixStatus)
+	m.WriteBytes([]byte("ledgerIndex"))
+	return m.Bytes()
+}
+
+func (pm *ParticipationManager) storeLedgerIndex(index milestone.Index) error {
+	m := marshalutil.New(4)
+	m.WriteUint32(uint32(index))
+	return pm.participationStore.Set(ledgerIndexKey(), m.Bytes())
+}
+
+func (pm *ParticipationManager) readLedgerIndex() (milestone.Index, error) {
+	v, err := pm.participationStore.Get(ledgerIndexKey())
+	if err != nil {
+		if errors.Is(err, kvstore.ErrKeyNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+	m := marshalutil.New(v)
+	u, err := m.ReadUint32()
+	return milestone.Index(u), err
+}
+
 // Events
 
 func eventKeyForEventID(eventID EventID) []byte {

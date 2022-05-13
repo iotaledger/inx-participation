@@ -1,23 +1,26 @@
 package participation
 
 const (
+	// Holds the database status
+	ParticipationStoreKeyPrefixStatus byte = 0
+
 	// Holds the events
-	ParticipationStoreKeyPrefixEvents byte = 0
+	ParticipationStoreKeyPrefixEvents byte = 1
 
 	// Holds the messages containing participations
-	ParticipationStoreKeyPrefixMessages byte = 1
+	ParticipationStoreKeyPrefixMessages byte = 2
 
 	// Tracks all active and past participations
-	ParticipationStoreKeyPrefixTrackedOutputs         byte = 2
-	ParticipationStoreKeyPrefixTrackedSpentOutputs    byte = 3
-	ParticipationStoreKeyPrefixTrackedOutputByAddress byte = 8
+	ParticipationStoreKeyPrefixTrackedOutputs         byte = 3
+	ParticipationStoreKeyPrefixTrackedSpentOutputs    byte = 4
+	ParticipationStoreKeyPrefixTrackedOutputByAddress byte = 5
 
 	// Voting
-	ParticipationStoreKeyPrefixBallotCurrentVoteBalanceForQuestionAndAnswer     byte = 4
-	ParticipationStoreKeyPrefixBallotAccululatedVoteBalanceForQuestionAndAnswer byte = 5
+	ParticipationStoreKeyPrefixBallotCurrentVoteBalanceForQuestionAndAnswer     byte = 6
+	ParticipationStoreKeyPrefixBallotAccululatedVoteBalanceForQuestionAndAnswer byte = 7
 
 	// Staking
-	ParticipationStoreKeyPrefixStakingAddress            byte = 6
-	ParticipationStoreKeyPrefixStakingTotalParticipation byte = 7
-	ParticipationStoreKeyPrefixStakingCurrentRewards     byte = 9
+	ParticipationStoreKeyPrefixStakingAddress            byte = 8
+	ParticipationStoreKeyPrefixStakingTotalParticipation byte = 9
+	ParticipationStoreKeyPrefixStakingCurrentRewards     byte = 10
 )
