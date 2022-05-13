@@ -770,7 +770,7 @@ func (pm *ParticipationManager) ParticipationsFromMessage(msg *ParticipationMess
 	txEssence := msg.TransactionEssence()
 	if txEssence == nil {
 		// if the message was included, there must be a transaction payload essence
-		return nil, nil, fmt.Errorf("no transaction transactionEssence found")
+		return nil, nil, errors.New("no transaction transactionEssence found")
 	}
 
 	txEssenceTaggedData := msg.TransactionEssenceTaggedData()

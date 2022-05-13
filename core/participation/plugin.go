@@ -130,8 +130,9 @@ func run() error {
 		e := newEcho()
 		setupRoutes(e)
 		go func() {
+			CoreComponent.LogInfof("You can now access the API using: http://%s", bindAddr)
 			if err := e.Start(bindAddr); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				CoreComponent.LogWarnf("Stopped faucet website server due to an error (%s)", err)
+				CoreComponent.LogWarnf("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
