@@ -9,7 +9,7 @@ import (
 
 	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/model/participation"
+	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/testutil"
 	iotago "github.com/iotaledger/iota.go/v3"
