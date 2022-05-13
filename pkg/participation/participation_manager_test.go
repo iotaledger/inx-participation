@@ -249,7 +249,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			output, participations, err := env.ParticipationManager().ParticipationsFromMessage(tt.message, 0)
+			output, participations, err := env.ParticipationManager().ParticipationsFromMessage(test.ParticipationMessageFromMessage(tt.message), 0)
 			require.NoError(t, err)
 
 			if tt.outputExists {
@@ -281,7 +281,7 @@ func TestSingleBallotVote(t *testing.T) {
 	require.Equal(t, milestone.Index(10), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
-	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation()))
+	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
 
 	// Issue a vote and milestone
 	env.IssueDefaultBallotVoteAndMilestone(eventID, env.Wallet1) // 5
@@ -294,7 +294,7 @@ func TestSingleBallotVote(t *testing.T) {
 	env.AssertDefaultBallotAnswerStatus(eventID, 0, 0)
 
 	// Event should be accepting votes now
-	require.Equal(t, 1, len(env.ParticipationManager().EventsAcceptingParticipation()))
+	require.Equal(t, 1, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
 
 	// Participation again
 	castVote := env.IssueDefaultBallotVoteAndMilestone(eventID, env.Wallet1) // 6
@@ -350,17 +350,17 @@ func TestSingleBallotVote(t *testing.T) {
 	env.IssueMilestone() // 11
 
 	var trackedVote *participation.TrackedParticipation
-	trackedVote, err = env.ParticipationManager().ParticipationForOutputID(eventID, castVote.Message().GeneratedUTXO().OutputID())
+	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Message().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
 	require.Equal(t, castVote.Message().StoredMessageID(), trackedVote.MessageID)
 	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
 	require.Equal(t, milestone.Index(11), trackedVote.EndIndex)
 
-	var messageFromParticipationStore *storage.Message
+	var messageFromParticipationStore *participation.ParticipationMessage
 	messageFromParticipationStore, err = env.ParticipationManager().MessageForEventAndMessageID(eventID, trackedVote.MessageID)
 	require.NoError(t, err)
 	require.NotNil(t, messageFromParticipationStore)
-	require.Equal(t, messageFromParticipationStore.Message(), castVote.Message().IotaMessage())
+	require.Equal(t, messageFromParticipationStore.Message, castVote.Message().IotaMessage())
 }
 
 func TestInvalidVoteHandling(t *testing.T) {
@@ -381,7 +381,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 	require.Equal(t, milestone.Index(10), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
-	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation()))
+	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
 
 	// Issue a vote and milestone
 	env.IssueDefaultBallotVoteAndMilestone(eventID, env.Wallet1) // 5
@@ -394,7 +394,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 	env.AssertDefaultBallotAnswerStatus(eventID, 0, 0)
 
 	// Event should be accepting votes now
-	require.Equal(t, 1, len(env.ParticipationManager().EventsAcceptingParticipation()))
+	require.Equal(t, 1, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
 
 	// Participation again
 	castVote := env.IssueDefaultBallotVoteAndMilestone(eventID, env.Wallet1) // 6
@@ -437,7 +437,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 	env.IssueMilestone(invalidParticipation.StoredMessageID()) // 9
 
 	var trackedVote *participation.TrackedParticipation
-	trackedVote, err = env.ParticipationManager().ParticipationForOutputID(eventID, castVote.Message().GeneratedUTXO().OutputID())
+	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Message().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
 	require.Equal(t, castVote.Message().StoredMessageID(), trackedVote.MessageID)
 	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
@@ -465,7 +465,7 @@ func TestBallotVoteCancel(t *testing.T) {
 	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
-	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation()))
+	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
 
 	env.IssueMilestone() // 5
 
@@ -1406,7 +1406,7 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 
 	env.IssueMilestone(doubleStakeWallet1.StoredMessageID()) // 6
 
-	_, err = env.ParticipationManager().ParticipationForOutputID(eventID, doubleStakeWallet1.GeneratedUTXO().OutputID())
+	_, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, doubleStakeWallet1.GeneratedUTXO().OutputID())
 	require.Error(t, err)
 	require.ErrorIs(t, err, participation.ErrUnknownParticipation)
 }

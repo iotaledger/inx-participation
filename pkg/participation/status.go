@@ -50,14 +50,18 @@ type EventStatus struct {
 
 // EventStatus returns the EventStatus for an event with the given eventID.
 func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...milestone.Index) (*EventStatus, error) {
-	event := pm.Event(eventID)
-	if event == nil {
-		return nil, ErrEventNotFound
-	}
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
 
-	index := pm.syncManager.ConfirmedMilestoneIndex()
+	index := pm.ledgerIndex
 	if len(milestone) > 0 {
 		index = milestone[0]
+	}
+
+	event := pm.EventWithoutLocking(eventID)
+	if event == nil {
+		return nil, ErrEventNotFound
 	}
 
 	if index > event.EndMilestoneIndex() {
@@ -88,12 +92,12 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...milest
 		questionStatus := &QuestionStatus{}
 
 		balanceForAnswerValue := func(answerValue uint8) (*AnswerStatus, error) {
-			currentBalance, err := pm.CurrentBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue)
+			currentBalance, err := pm.currentBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue)
 			if err != nil {
 				return nil, err
 			}
 
-			accumulatedBalance, err := pm.AccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue)
+			accumulatedBalance, err := pm.accumulatedBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue)
 			if err != nil {
 				return nil, err
 			}

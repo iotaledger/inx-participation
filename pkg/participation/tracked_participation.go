@@ -3,7 +3,6 @@ package participation
 import (
 	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/model/utxo"
 	"github.com/iotaledger/hive.go/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -24,8 +23,7 @@ type TrackedParticipation struct {
 	EndIndex milestone.Index
 }
 
-// ParseEventID helps to parse an EventID using marshalutil.
-func ParseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
+func parseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
 	bytes, err := ms.ReadBytes(EventIDLength)
 	if err != nil {
 		return NullEventID, err
@@ -33,6 +31,24 @@ func ParseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
 	o := EventID{}
 	copy(o[:], bytes)
 	return o, nil
+}
+
+func parseOutputID(ms *marshalutil.MarshalUtil) (*iotago.OutputID, error) {
+	bytes, err := ms.ReadBytes(iotago.OutputIDLength)
+	if err != nil {
+		return nil, err
+	}
+	o := &iotago.OutputID{}
+	copy(o[:], bytes)
+	return o, nil
+}
+
+func parseMessageID(ms *marshalutil.MarshalUtil) (hornet.MessageID, error) {
+	bytes, err := ms.ReadBytes(iotago.MessageIDLength)
+	if err != nil {
+		return nil, err
+	}
+	return hornet.MessageIDFromSlice(bytes), nil
 }
 
 func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipation, error) {
@@ -53,20 +69,20 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 	}
 
 	// Read EventID
-	eventID, err := ParseEventID(mKey)
+	eventID, err := parseEventID(mKey)
 	if err != nil {
 		return nil, err
 	}
 
 	// Read OutputID
-	outputID, err := utxo.ParseOutputID(mKey)
+	outputID, err := parseOutputID(mKey)
 	if err != nil {
 		return nil, err
 	}
 
 	mValue := marshalutil.New(value)
 
-	messageID, err := utxo.ParseMessageID(mValue)
+	messageID, err := parseMessageID(mValue)
 	if err != nil {
 		return nil, err
 	}

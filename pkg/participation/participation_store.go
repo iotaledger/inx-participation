@@ -5,8 +5,6 @@ import (
 
 	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/model/storage"
-	"github.com/gohornet/hornet/pkg/model/utxo"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -104,12 +102,12 @@ func messageKeyForEventAndMessageID(eventID EventID, messageID hornet.MessageID)
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) storeMessageForEvent(eventID EventID, message *storage.Message, mutations kvstore.BatchedMutations) error {
-	return mutations.Set(messageKeyForEventAndMessageID(eventID, message.MessageID()), message.Data())
+func (pm *ParticipationManager) storeMessageForEvent(eventID EventID, message *ParticipationMessage, mutations kvstore.BatchedMutations) error {
+	return mutations.Set(messageKeyForEventAndMessageID(eventID, message.MessageID), message.Data)
 }
 
-func (pm *ParticipationManager) MessageForEventAndMessageID(eventID EventID, messageId hornet.MessageID) (*storage.Message, error) {
-	value, err := pm.participationStore.Get(messageKeyForEventAndMessageID(eventID, messageId))
+func (pm *ParticipationManager) MessageForEventAndMessageID(eventID EventID, messageID hornet.MessageID) (*ParticipationMessage, error) {
+	value, err := pm.participationStore.Get(messageKeyForEventAndMessageID(eventID, messageID))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil, nil
 	}
@@ -117,7 +115,16 @@ func (pm *ParticipationManager) MessageForEventAndMessageID(eventID EventID, mes
 		return nil, err
 	}
 
-	return storage.MessageFromBytes(value, serializer.DeSeriModeNoValidation, nil)
+	iotaMsg := &iotago.Message{}
+	if _, err := iotaMsg.Deserialize(value, serializer.DeSeriModeNoValidation, nil); err != nil {
+		return nil, err
+	}
+
+	return &ParticipationMessage{
+		MessageID: messageID,
+		Message:   iotaMsg,
+		Data:      value,
+	}, nil
 }
 
 // Outputs
@@ -172,7 +179,14 @@ func participationKeyForEventAndAddressOutputID(eventID EventID, addressBytes []
 }
 
 func (pm *ParticipationManager) ParticipationsForAddress(eventID EventID, address iotago.Address) ([]*TrackedParticipation, error) {
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
 
+	return pm.ParticipationsForAddressWithoutLocking(eventID, address)
+}
+
+func (pm *ParticipationManager) ParticipationsForAddressWithoutLocking(eventID EventID, address iotago.Address) ([]*TrackedParticipation, error) {
 	addressBytes, err := address.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
@@ -187,7 +201,7 @@ func (pm *ParticipationManager) ParticipationsForAddress(eventID EventID, addres
 		outputID := &iotago.OutputID{}
 		copy(outputID[:], key[prefixLen:])
 
-		participation, err := pm.ParticipationForOutputID(eventID, outputID)
+		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)
 		if err != nil {
 			if errors.Is(err, ErrUnknownParticipation) {
 				return true
@@ -210,10 +224,14 @@ func (pm *ParticipationManager) ParticipationsForAddress(eventID EventID, addres
 }
 
 func (pm *ParticipationManager) ParticipationsForOutputID(outputID *iotago.OutputID) ([]*TrackedParticipation, error) {
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
+
 	eventIDs := pm.EventIDs()
 	trackedParticipations := []*TrackedParticipation{}
 	for _, eventID := range eventIDs {
-		participation, err := pm.ParticipationForOutputID(eventID, outputID)
+		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)
 		if err != nil {
 			if errors.Is(err, ErrUnknownParticipation) {
 				continue
@@ -225,7 +243,7 @@ func (pm *ParticipationManager) ParticipationsForOutputID(outputID *iotago.Outpu
 	return trackedParticipations, nil
 }
 
-func (pm *ParticipationManager) ParticipationForOutputID(eventID EventID, outputID *iotago.OutputID) (*TrackedParticipation, error) {
+func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID EventID, outputID *iotago.OutputID) (*TrackedParticipation, error) {
 	readOutput := func(eventID EventID, outputID *iotago.OutputID) (kvstore.Key, kvstore.Value, error) {
 		key := participationKeyForEventAndOutputID(eventID, outputID)
 		value, err := pm.participationStore.Get(key)
@@ -269,6 +287,10 @@ func (pm *ParticipationManager) ParticipationForOutputID(eventID EventID, output
 type TrackedParticipationConsumer func(trackedParticipation *TrackedParticipation) bool
 
 func (pm *ParticipationManager) ForEachActiveParticipation(eventID EventID, consumer TrackedParticipationConsumer) error {
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
+
 	var innerErr error
 	if err := pm.participationStore.Iterate(participationKeyForEventOutputsPrefix(eventID), func(key kvstore.Key, value kvstore.Value) bool {
 		participation, err := TrackedParticipationFromBytes(key, value)
@@ -284,6 +306,10 @@ func (pm *ParticipationManager) ForEachActiveParticipation(eventID EventID, cons
 }
 
 func (pm *ParticipationManager) ForEachPastParticipation(eventID EventID, consumer TrackedParticipationConsumer) error {
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
+
 	var innerErr error
 	if err := pm.participationStore.Iterate(participationKeyForEventSpentOutputsPrefix(eventID), func(key kvstore.Key, value kvstore.Value) bool {
 		participation, err := TrackedParticipationFromBytes(key, value)
@@ -332,34 +358,29 @@ func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milest
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, output *utxo.Output, startIndex milestone.Index, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, output *ParticipationOutput, startIndex milestone.Index, mutations kvstore.BatchedMutations) error {
 	trackedVote := &TrackedParticipation{
 		EventID:    eventID,
-		OutputID:   output.OutputID(),
-		MessageID:  output.MessageID(),
-		Amount:     output.Deposit(),
+		OutputID:   output.OutputID,
+		MessageID:  output.MessageID,
+		Amount:     output.Deposit,
 		StartIndex: startIndex,
 		EndIndex:   0,
 	}
-	if err := mutations.Set(participationKeyForEventAndOutputID(eventID, output.OutputID()), trackedVote.ValueBytes()); err != nil {
+	if err := mutations.Set(participationKeyForEventAndOutputID(eventID, output.OutputID), trackedVote.ValueBytes()); err != nil {
 		return err
 	}
 
-	unlockConditions, err := output.Output().UnlockConditions().Set()
+	addressBytes, err := output.serializedAddressBytes()
 	if err != nil {
 		return err
 	}
 
-	addressBytes, err := unlockConditions.Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return err
-	}
-
-	return mutations.Set(participationKeyForEventAndAddressOutputID(eventID, addressBytes, output.OutputID()), []byte{})
+	return mutations.Set(participationKeyForEventAndAddressOutputID(eventID, addressBytes, output.OutputID), []byte{})
 }
 
-func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, output *utxo.Output, endIndex milestone.Index, mutations kvstore.BatchedMutations) error {
-	key := participationKeyForEventAndOutputID(eventID, output.OutputID())
+func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, output *ParticipationOutput, endIndex milestone.Index, mutations kvstore.BatchedMutations) error {
+	key := participationKeyForEventAndOutputID(eventID, output.OutputID)
 
 	value, err := pm.participationStore.Get(key)
 	if err != nil {
@@ -382,7 +403,7 @@ func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, out
 	}
 
 	// Add the entry to the Spent list
-	return mutations.Set(participationKeyForEventAndSpentOutputID(eventID, output.OutputID()), participation.ValueBytes())
+	return mutations.Set(participationKeyForEventAndSpentOutputID(eventID, output.OutputID), participation.ValueBytes())
 }
 
 func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID, endIndex milestone.Index, mutations kvstore.BatchedMutations) error {
@@ -418,7 +439,7 @@ func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID,
 	return innerErr
 }
 
-func (pm *ParticipationManager) CurrentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
+func (pm *ParticipationManager) currentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
 	val, err := pm.participationStore.Get(currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx))
 
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -434,7 +455,7 @@ func (pm *ParticipationManager) CurrentBallotVoteBalanceForQuestionAndAnswer(eve
 	return ms.ReadUint64()
 }
 
-func (pm *ParticipationManager) AccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
+func (pm *ParticipationManager) accumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
 	val, err := pm.participationStore.Get(accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx))
 
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -469,7 +490,7 @@ func (pm *ParticipationManager) startCountingBallotAnswers(event *Event, vote *P
 		// We already verified, that there are exactly as many answers as questions in the ballot, so no need to check here again
 		answerValue := questions[idx].answerValueForByte(answerByte)
 
-		currentVoteBalance, err := pm.CurrentBallotVoteBalanceForQuestionAndAnswer(vote.EventID, milestone, questionIndex, answerValue)
+		currentVoteBalance, err := pm.currentBallotVoteBalanceForQuestionAndAnswer(vote.EventID, milestone, questionIndex, answerValue)
 		if err != nil {
 			return err
 		}
@@ -491,7 +512,7 @@ func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Pa
 		// We already verified, that there are exactly as many answers as questions in the ballot, so no need to check here again
 		answerValue := questions[idx].answerValueForByte(answerByte)
 
-		currentVoteBalance, err := pm.CurrentBallotVoteBalanceForQuestionAndAnswer(vote.EventID, milestone, questionIndex, answerValue)
+		currentVoteBalance, err := pm.currentBallotVoteBalanceForQuestionAndAnswer(vote.EventID, milestone, questionIndex, answerValue)
 		if err != nil {
 			return err
 		}
@@ -512,7 +533,7 @@ func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Pa
 
 // Staking
 
-func (pm *ParticipationManager) RewardsForTrackedParticipation(trackedParticipation *TrackedParticipation, atIndex milestone.Index) (uint64, error) {
+func (pm *ParticipationManager) RewardsForTrackedParticipationWithoutLocking(trackedParticipation *TrackedParticipation, atIndex milestone.Index) (uint64, error) {
 
 	event := pm.Event(trackedParticipation.EventID)
 	if event == nil {
@@ -560,14 +581,14 @@ func (pm *ParticipationManager) RewardsForTrackedParticipation(trackedParticipat
 	return rewardsForParticipation, nil
 }
 
-func (pm *ParticipationManager) StakingRewardForAddress(eventID EventID, address iotago.Address, msIndex milestone.Index) (uint64, error) {
+func (pm *ParticipationManager) StakingRewardForAddressWithoutLocking(eventID EventID, address iotago.Address, msIndex milestone.Index) (uint64, error) {
 	var rewards uint64
-	trackedParticipations, err := pm.ParticipationsForAddress(eventID, address)
+	trackedParticipations, err := pm.ParticipationsForAddressWithoutLocking(eventID, address)
 	if err != nil {
 		return 0, err
 	}
 	for _, trackedParticipation := range trackedParticipations {
-		amount, err := pm.RewardsForTrackedParticipation(trackedParticipation, msIndex)
+		amount, err := pm.RewardsForTrackedParticipationWithoutLocking(trackedParticipation, msIndex)
 		if err != nil {
 			return 0, err
 		}
@@ -711,7 +732,11 @@ func (pm *ParticipationManager) setTotalStakingParticipationForEvent(eventID Eve
 type StakingRewardsConsumer func(address iotago.Address, participation *TrackedParticipation, rewards uint64) bool
 
 func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID EventID, msIndex milestone.Index, consumer StakingRewardsConsumer) error {
-	event := pm.Event(eventID)
+	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
+	pm.RLock()
+	defer pm.RUnlock()
+
+	event := pm.EventWithoutLocking(eventID)
 	if event == nil {
 		return nil
 	}
@@ -742,13 +767,13 @@ func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID Event
 		outputID := &iotago.OutputID{}
 		copy(outputID[:], key[prefixLen+addrLen:])
 
-		participation, err := pm.ParticipationForOutputID(eventID, outputID)
+		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)
 		if err != nil {
 			innerErr = err
 			return false
 		}
 
-		balance, err := pm.RewardsForTrackedParticipation(participation, msIndex)
+		balance, err := pm.RewardsForTrackedParticipationWithoutLocking(participation, msIndex)
 		if err != nil {
 			innerErr = err
 			return false

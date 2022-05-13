@@ -10,6 +10,7 @@ import (
 
 	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
+	"github.com/gohornet/hornet/pkg/model/storage"
 	"github.com/gohornet/hornet/pkg/model/utxo"
 	"github.com/gohornet/hornet/pkg/testsuite"
 	"github.com/gohornet/hornet/pkg/testsuite/utils"
@@ -128,10 +129,88 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	store := mapdb.NewMapDB()
 
 	pm, err := participation.NewManager(
-		te.Storage(),
-		te.SyncManager(),
 		store,
-		te.ProtocolParameters(),
+		func() *iotago.ProtocolParameters {
+			return te.ProtocolParameters()
+		},
+		func() (confirmedIndex milestone.Index, pruningIndex milestone.Index) {
+			return te.SyncManager().ConfirmedMilestoneIndex(), 0
+		},
+		func(messageID hornet.MessageID) (*participation.ParticipationMessage, error) {
+			cachedMsg := te.Storage().CachedMessageOrNil(messageID)
+			if cachedMsg == nil {
+				return nil, nil
+			}
+			defer cachedMsg.Release(true)
+			return &participation.ParticipationMessage{
+				MessageID: messageID,
+				Message:   cachedMsg.Message().Message(),
+				Data:      cachedMsg.Message().Data(),
+			}, nil
+		},
+		func(outputID *iotago.OutputID) (*participation.ParticipationOutput, error) {
+			output, err := te.UTXOManager().ReadOutputByOutputIDWithoutLocking(outputID)
+			if err != nil {
+				return nil, err
+			}
+			if output.OutputType() != iotago.OutputBasic {
+				return nil, nil
+			}
+			return &participation.ParticipationOutput{
+				MessageID: output.MessageID(),
+				OutputID:  outputID,
+				Address:   output.Output().UnlockConditions().MustSet().Address().Address,
+				Deposit:   output.Deposit(),
+			}, nil
+		},
+		func(startIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) bool) error {
+			te.UTXOManager().ReadLockLedger()
+			defer te.UTXOManager().ReadUnlockLedger()
+
+			currentIndex := startIndex
+			for {
+				if currentIndex > te.SyncManager().ConfirmedMilestoneIndex() {
+					return nil
+				}
+
+				msDiff, err := te.UTXOManager().MilestoneDiffWithoutLocking(currentIndex)
+				if err != nil {
+					return err
+				}
+
+				var created []*participation.ParticipationOutput
+				for _, output := range msDiff.Outputs {
+					if output.OutputType() != iotago.OutputBasic {
+						continue
+					}
+					created = append(created, &participation.ParticipationOutput{
+						MessageID: output.MessageID(),
+						OutputID:  output.OutputID(),
+						Address:   output.Output().UnlockConditions().MustSet().Address().Address,
+						Deposit:   output.Deposit(),
+					})
+				}
+
+				var consumed []*participation.ParticipationOutput
+				for _, spent := range msDiff.Spents {
+					if spent.OutputType() != iotago.OutputBasic {
+						continue
+					}
+					consumed = append(consumed, &participation.ParticipationOutput{
+						MessageID: spent.MessageID(),
+						OutputID:  spent.OutputID(),
+						Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
+						Deposit:   spent.Deposit(),
+					})
+				}
+
+				if !handler(msDiff.Index, created, consumed) {
+					return nil
+				}
+
+				currentIndex++
+			}
+		},
 		participation.WithTagMessage(ParticipationTag),
 	)
 	require.NoError(t, err)
@@ -139,7 +218,34 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	// Connect the callbacks from the testsuite to the ParticipationManager
 	te.ConfigureUTXOCallbacks(
 		func(index milestone.Index, newOutputs utxo.Outputs, newSpents utxo.Spents) {
-			require.NoError(t, pm.ApplyNewLedgerUpdate(index, newOutputs, newSpents))
+
+			var created []*participation.ParticipationOutput
+			for _, output := range newOutputs {
+				if output.OutputType() != iotago.OutputBasic {
+					continue
+				}
+				created = append(created, &participation.ParticipationOutput{
+					MessageID: output.MessageID(),
+					OutputID:  output.OutputID(),
+					Address:   output.Output().UnlockConditions().MustSet().Address().Address,
+					Deposit:   output.Deposit(),
+				})
+			}
+
+			var consumed []*participation.ParticipationOutput
+			for _, spent := range newSpents {
+				if spent.OutputType() != iotago.OutputBasic {
+					continue
+				}
+				consumed = append(consumed, &participation.ParticipationOutput{
+					MessageID: spent.MessageID(),
+					OutputID:  spent.OutputID(),
+					Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
+					Deposit:   spent.Deposit(),
+				})
+			}
+
+			require.NoError(t, pm.ApplyNewLedgerUpdate(index, created, consumed))
 		},
 	)
 
@@ -299,8 +405,8 @@ func (env *ParticipationTestEnv) PrintJSON(i interface{}) {
 
 func (env *ParticipationTestEnv) AssertEventsCount(acceptingCount int, countingCount int) {
 	// Verify current event counts
-	require.Equal(env.t, acceptingCount, len(env.ParticipationManager().EventsAcceptingParticipation()))
-	require.Equal(env.t, countingCount, len(env.ParticipationManager().EventsCountingParticipation()))
+	require.Equal(env.t, acceptingCount, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
+	require.Equal(env.t, countingCount, len(env.ParticipationManager().EventsCountingParticipation(env.ConfirmedMilestoneIndex())))
 }
 
 func (env *ParticipationTestEnv) AssertEventParticipationStatus(eventID participation.EventID, activeParticipations int, pastParticipations int) {
@@ -346,7 +452,7 @@ func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participatio
 }
 
 func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participation.EventID, sentParticipations *SentParticipations, startMilestoneIndex milestone.Index, endMilestoneIndex milestone.Index, amount uint64) {
-	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputID(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
 	require.NoError(env.t, err)
 	require.Equal(env.t, sentParticipations.Message().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
 	require.Equal(env.t, sentParticipations.Message().StoredMessageID(), trackedParticipation.MessageID)
@@ -356,7 +462,7 @@ func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participatio
 }
 
 func (env *ParticipationTestEnv) AssertInvalidParticipation(eventID participation.EventID, sentParticipations *SentParticipations) {
-	_, err := env.ParticipationManager().ParticipationForOutputID(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	_, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
 	require.Error(env.t, err)
 	require.ErrorIs(env.t, err, participation.ErrUnknownParticipation)
 }
@@ -367,11 +473,19 @@ func (env *ParticipationTestEnv) AssertRewardBalance(eventID participation.Event
 	if len(milestoneIndex) > 0 {
 		msIndex = milestoneIndex[0]
 	}
-	rewards, err := env.ParticipationManager().StakingRewardForAddress(eventID, address, msIndex)
+	rewards, err := env.ParticipationManager().StakingRewardForAddressWithoutLocking(eventID, address, msIndex)
 	require.NoError(env.t, err)
 	require.Exactly(env.t, balance, rewards)
 }
 
 func (env *ParticipationTestEnv) AssertWalletBalance(wallet *utils.HDWallet, expectedBalance uint64) {
 	env.te.AssertWalletBalance(wallet, expectedBalance)
+}
+
+func ParticipationMessageFromMessage(msg *storage.Message) *participation.ParticipationMessage {
+	return &participation.ParticipationMessage{
+		MessageID: msg.MessageID(),
+		Message:   msg.Message(),
+		Data:      msg.Data(),
+	}
 }

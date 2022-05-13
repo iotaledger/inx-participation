@@ -568,7 +568,7 @@ func assertTotalRewardsFromParticipations(t *testing.T, participations []struct 
 
 	var sum uint64
 	for _, p := range participations {
-		rewards, err := env.ParticipationManager().RewardsForTrackedParticipation(&participation.TrackedParticipation{
+		rewards, err := env.ParticipationManager().RewardsForTrackedParticipationWithoutLocking(&participation.TrackedParticipation{
 			EventID:    eventID,
 			OutputID:   &iotago.OutputID{},
 			MessageID:  hornet.NullMessageID(),
