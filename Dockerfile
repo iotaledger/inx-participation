@@ -19,7 +19,7 @@ RUN go mod download
 RUN go mod verify
 
 # Build the binary
-RUN go build -o /app/inx-participation -a
+RUN go build -o /app/inx-participation -a -tags rocksdb
 
 # Copy the assets
 COPY ./config.json /app/config.json
