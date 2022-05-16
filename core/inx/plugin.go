@@ -9,7 +9,6 @@ import (
 	"github.com/gohornet/inx-participation/pkg/daemon"
 	"github.com/gohornet/inx-participation/pkg/nodebridge"
 	"github.com/iotaledger/hive.go/app"
-	"github.com/iotaledger/hive.go/configuration"
 )
 
 func init() {
@@ -26,7 +25,6 @@ func init() {
 
 type dependencies struct {
 	dig.In
-	AppConfig  *configuration.Configuration `name:"appConfig"`
 	NodeBridge *nodebridge.NodeBridge
 }
 
@@ -39,13 +37,12 @@ func provide(c *dig.Container) error {
 
 	type inxDeps struct {
 		dig.In
-		AppConfig       *configuration.Configuration `name:"appConfig"`
 		ShutdownHandler *shutdown.ShutdownHandler
 	}
 
 	if err := c.Provide(func(deps inxDeps) (*nodebridge.NodeBridge, error) {
 		return nodebridge.NewNodeBridge(CoreComponent.Daemon().ContextStopped(),
-			deps.AppConfig.String(CfgINXAddress),
+			ParamsINX.Address,
 			CoreComponent.Logger())
 	}); err != nil {
 		return err

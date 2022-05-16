@@ -110,7 +110,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		Store().
 		BookOnWallets()
 
-	// Confirming milestone at message D
+	// Confirming milestone at block D
 	_, confStats := te.IssueAndConfirmMilestoneOnTips(hornet.MessageIDs{messageD.StoredMessageID()}, false)
 	if assertSteps {
 
@@ -137,16 +137,16 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func() (confirmedIndex milestone.Index, pruningIndex milestone.Index) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
-		func(messageID hornet.MessageID) (*participation.ParticipationMessage, error) {
-			cachedMsg := te.Storage().CachedMessageOrNil(messageID)
+		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
+			cachedMsg := te.Storage().CachedMessageOrNil(blockID)
 			if cachedMsg == nil {
 				return nil, nil
 			}
 			defer cachedMsg.Release(true)
-			return &participation.ParticipationMessage{
-				MessageID: messageID,
-				Message:   cachedMsg.Message().Message(),
-				Data:      cachedMsg.Message().Data(),
+			return &participation.ParticipationBlock{
+				BlockID: blockID,
+				Block:   cachedMsg.Message().Message(),
+				Data:    cachedMsg.Message().Data(),
 			}, nil
 		},
 		func(outputID *iotago.OutputID) (*participation.ParticipationOutput, error) {
@@ -158,10 +158,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				return nil, nil
 			}
 			return &participation.ParticipationOutput{
-				MessageID: output.MessageID(),
-				OutputID:  outputID,
-				Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-				Deposit:   output.Deposit(),
+				BlockID:  output.MessageID(),
+				OutputID: outputID,
+				Address:  output.Output().UnlockConditionsSet().Address().Address,
+				Deposit:  output.Deposit(),
 			}, nil
 		},
 		func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) bool) error {
@@ -185,10 +185,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 						continue
 					}
 					created = append(created, &participation.ParticipationOutput{
-						MessageID: output.MessageID(),
-						OutputID:  output.OutputID(),
-						Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-						Deposit:   output.Deposit(),
+						BlockID:  output.MessageID(),
+						OutputID: output.OutputID(),
+						Address:  output.Output().UnlockConditionsSet().Address().Address,
+						Deposit:  output.Deposit(),
 					})
 				}
 
@@ -198,10 +198,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 						continue
 					}
 					consumed = append(consumed, &participation.ParticipationOutput{
-						MessageID: spent.MessageID(),
-						OutputID:  spent.OutputID(),
-						Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
-						Deposit:   spent.Deposit(),
+						BlockID:  spent.MessageID(),
+						OutputID: spent.OutputID(),
+						Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+						Deposit:  spent.Deposit(),
 					})
 				}
 
@@ -226,10 +226,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					continue
 				}
 				created = append(created, &participation.ParticipationOutput{
-					MessageID: output.MessageID(),
-					OutputID:  output.OutputID(),
-					Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-					Deposit:   output.Deposit(),
+					BlockID:  output.MessageID(),
+					OutputID: output.OutputID(),
+					Address:  output.Output().UnlockConditionsSet().Address().Address,
+					Deposit:  output.Deposit(),
 				})
 			}
 
@@ -239,10 +239,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					continue
 				}
 				consumed = append(consumed, &participation.ParticipationOutput{
-					MessageID: spent.MessageID(),
-					OutputID:  spent.OutputID(),
-					Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
-					Deposit:   spent.Deposit(),
+					BlockID:  spent.MessageID(),
+					OutputID: spent.OutputID(),
+					Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+					Deposit:  spent.Deposit(),
 				})
 			}
 
@@ -370,7 +370,7 @@ func (env *ParticipationTestEnv) IssueDefaultBallotVoteAndMilestone(eventID part
 		AddDefaultBallotVote(eventID).
 		Send()
 
-	_, confStats := env.IssueMilestone(castVote.Message().StoredMessageID())
+	_, confStats := env.IssueMilestone(castVote.Block().StoredMessageID())
 	require.Equal(env.t, 1+1, confStats.MessagesReferenced) // 1 + milestone itself
 
 	return castVote
@@ -453,17 +453,17 @@ func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participatio
 }
 
 func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participation.EventID, sentParticipations *SentParticipations, startMilestoneIndex milestone.Index, endMilestoneIndex milestone.Index, amount uint64) {
-	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Block().GeneratedUTXO().OutputID())
 	require.NoError(env.t, err)
-	require.Equal(env.t, sentParticipations.Message().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
-	require.Equal(env.t, sentParticipations.Message().StoredMessageID(), trackedParticipation.MessageID)
+	require.Equal(env.t, sentParticipations.Block().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
+	require.Equal(env.t, sentParticipations.Block().StoredMessageID(), trackedParticipation.BlockID)
 	require.Equal(env.t, amount, trackedParticipation.Amount)
 	require.Equal(env.t, startMilestoneIndex, trackedParticipation.StartIndex)
 	require.Equal(env.t, endMilestoneIndex, trackedParticipation.EndIndex)
 }
 
 func (env *ParticipationTestEnv) AssertInvalidParticipation(eventID participation.EventID, sentParticipations *SentParticipations) {
-	_, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	_, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Block().GeneratedUTXO().OutputID())
 	require.Error(env.t, err)
 	require.ErrorIs(env.t, err, participation.ErrUnknownParticipation)
 }
@@ -483,10 +483,10 @@ func (env *ParticipationTestEnv) AssertWalletBalance(wallet *utils.HDWallet, exp
 	env.te.AssertWalletBalance(wallet, expectedBalance)
 }
 
-func ParticipationMessageFromMessage(msg *storage.Message) *participation.ParticipationMessage {
-	return &participation.ParticipationMessage{
-		MessageID: msg.MessageID(),
-		Message:   msg.Message(),
-		Data:      msg.Data(),
+func ParticipationBlockFromBlock(msg *storage.Message) *participation.ParticipationBlock {
+	return &participation.ParticipationBlock{
+		BlockID: msg.MessageID().ToArray(),
+		Block:   msg.Message(),
+		Data:    msg.Data(),
 	}
 }

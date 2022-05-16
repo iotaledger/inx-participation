@@ -1,11 +1,11 @@
 package app
 
 import (
-	"github.com/gohornet/hornet/core/gracefulshutdown"
-	"github.com/gohornet/hornet/plugins/profiling"
 	"github.com/gohornet/inx-participation/core/inx"
 	"github.com/gohornet/inx-participation/core/participation"
 	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/app/core/shutdown"
+	"github.com/iotaledger/hive.go/app/plugins/profiling"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 	Name = "inx-participation"
 
 	// Version of the app.
-	Version = "0.1.0"
+	Version = "0.2.0"
 )
 
 func App() *app.App {
@@ -22,7 +22,7 @@ func App() *app.App {
 		app.WithCoreComponents([]*app.CoreComponent{
 			inx.CoreComponent,
 			participation.CoreComponent,
-			gracefulshutdown.CoreComponent,
+			shutdown.CoreComponent,
 		}...),
 		app.WithPlugins([]*app.Plugin{
 			profiling.Plugin,

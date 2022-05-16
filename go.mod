@@ -6,18 +6,17 @@ require (
 	github.com/gohornet/hornet v1.1.0-rc1.0.20220513093235-f5ea903c5ddd
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/iotaledger/hive.go v0.0.0-20220506133510-ef2e113d6665
-	github.com/iotaledger/hive.go/app v0.0.0-20220506133510-ef2e113d6665
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220506133510-ef2e113d6665
-	github.com/iotaledger/inx/go v0.0.0-20220506113305-665a887924b0
-	github.com/iotaledger/iota.go/v3 v3.0.0-20220506110451-defa263ae45a
+	github.com/iotaledger/hive.go v0.0.0-20220516114042-6c0ad76bc65f
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220516114042-6c0ad76bc65f
+	github.com/iotaledger/inx/go v0.0.0-20220516150515-c4dce619e926
+	github.com/iotaledger/iota.go/v3 v3.0.0-20220516085559-30a1a38f1a93
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/dig v1.14.1
-	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88
-	google.golang.org/grpc v1.46.0
+	golang.org/x/crypto v0.0.0-20220516162934-403b01795ae8
+	google.golang.org/grpc v1.46.2
 )
 
 require (
@@ -37,7 +36,7 @@ require (
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
 	github.com/dgraph-io/badger/v2 v2.2007.4 // indirect
 	github.com/dgraph-io/ristretto v0.1.0 // indirect
-	github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2 // indirect
+	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.3.5 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
@@ -65,7 +64,7 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/klauspost/compress v1.15.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
-	github.com/knadh/koanf v1.4.1 // indirect
+	github.com/knadh/koanf v1.4.2-0.20220512043835-4112a7258008 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/labstack/gommon v0.3.1 // indirect
@@ -115,8 +114,8 @@ require (
 	go.uber.org/multierr v1.8.0 // indirect
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171 // indirect
-	golang.org/x/net v0.0.0-20220425223048-2871e0cb64e4 // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
+	golang.org/x/net v0.0.0-20220516155154-20f960328961 // indirect
+	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220411224347-583f2d630306 // indirect
 	golang.org/x/xerrors v0.0.0-20220411194840-2f41105eb62f // indirect

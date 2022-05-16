@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	APIRoute = "participation/v1"
+	APIRoute = "participation/v2"
 
 	// RouteParticipationEvents is the route to list all events, returning their ID, the event name and status.
 	// GET returns a list of all events known to the node. Optional query parameter returns filters events by type (query parameters: "type").

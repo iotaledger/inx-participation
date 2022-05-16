@@ -82,7 +82,7 @@ func (s *stakingTestEnv) StakeWalletAndIssueMilestone() {
 			Answers: []byte{},
 		}).
 		Send()
-	s.IssueMilestone(p.Message().StoredMessageID())
+	s.IssueMilestone(p.Block().StoredMessageID())
 }
 
 func (s *stakingTestEnv) StakeWalletThenIncreaseBalanceAndIssueMilestone() {
@@ -95,7 +95,7 @@ func (s *stakingTestEnv) StakeWalletThenIncreaseBalanceAndIssueMilestone() {
 		Send()
 
 	t := s.env.Transfer(s.env.GenesisWallet, s.env.Wallet1, 1_500_000)
-	s.IssueMilestone(p.Message().StoredMessageID(), t.StoredMessageID())
+	s.IssueMilestone(p.Block().StoredMessageID(), t.StoredMessageID())
 	s.AssertWalletBalance(2_500_000)
 }
 
@@ -571,7 +571,7 @@ func assertTotalRewardsFromParticipations(t *testing.T, participations []struct 
 		rewards, err := env.ParticipationManager().RewardsForTrackedParticipationWithoutLocking(&participation.TrackedParticipation{
 			EventID:    eventID,
 			OutputID:   &iotago.OutputID{},
-			MessageID:  hornet.NullMessageID(),
+			BlockID:    hornet.NullMessageID(),
 			Amount:     p.amount,
 			StartIndex: p.startIndex,
 			EndIndex:   p.endIndex,

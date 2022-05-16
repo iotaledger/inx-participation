@@ -3,7 +3,6 @@ package participation
 import (
 	"github.com/pkg/errors"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/marshalutil"
@@ -114,28 +113,28 @@ func (pm *ParticipationManager) deleteEvent(eventID EventID) error {
 	return pm.participationStore.Delete(eventKeyForEventID(eventID))
 }
 
-// Messages
+// Blocks
 
-func messageKeyForEventPrefix(eventID EventID) []byte {
+func blockKeyForEventPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
-	m.WriteByte(ParticipationStoreKeyPrefixMessages) // 1 byte
-	m.WriteBytes(eventID[:])                         // 32 bytes
+	m.WriteByte(ParticipationStoreKeyPrefixBlocks) // 1 byte
+	m.WriteBytes(eventID[:])                       // 32 bytes
 	return m.Bytes()
 }
 
-func messageKeyForEventAndMessageID(eventID EventID, messageID hornet.MessageID) []byte {
+func blockKeyForEventAndBlockID(eventID EventID, blockID iotago.BlockID) []byte {
 	m := marshalutil.New(65)
-	m.WriteBytes(messageKeyForEventPrefix(eventID)) // 33 bytes
-	m.WriteBytes(messageID)                         // 32 bytes
+	m.WriteBytes(blockKeyForEventPrefix(eventID)) // 33 bytes
+	m.WriteBytes(blockID[:])                      // 32 bytes
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) storeMessageForEvent(eventID EventID, message *ParticipationMessage, mutations kvstore.BatchedMutations) error {
-	return mutations.Set(messageKeyForEventAndMessageID(eventID, message.MessageID), message.Data)
+func (pm *ParticipationManager) storeBlockForEvent(eventID EventID, block *ParticipationBlock, mutations kvstore.BatchedMutations) error {
+	return mutations.Set(blockKeyForEventAndBlockID(eventID, block.BlockID), block.Data)
 }
 
-func (pm *ParticipationManager) MessageForEventAndMessageID(eventID EventID, messageID hornet.MessageID) (*ParticipationMessage, error) {
-	value, err := pm.participationStore.Get(messageKeyForEventAndMessageID(eventID, messageID))
+func (pm *ParticipationManager) BlockForEventAndBlockID(eventID EventID, blockID iotago.BlockID) (*ParticipationBlock, error) {
+	value, err := pm.participationStore.Get(blockKeyForEventAndBlockID(eventID, blockID))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
 		return nil, nil
 	}
@@ -143,15 +142,15 @@ func (pm *ParticipationManager) MessageForEventAndMessageID(eventID EventID, mes
 		return nil, err
 	}
 
-	iotaMsg := &iotago.Message{}
-	if _, err := iotaMsg.Deserialize(value, serializer.DeSeriModeNoValidation, nil); err != nil {
+	iotaBlock := &iotago.Block{}
+	if _, err := iotaBlock.Deserialize(value, serializer.DeSeriModeNoValidation, nil); err != nil {
 		return nil, err
 	}
 
-	return &ParticipationMessage{
-		MessageID: messageID,
-		Message:   iotaMsg,
-		Data:      value,
+	return &ParticipationBlock{
+		BlockID: blockID,
+		Block:   iotaBlock,
+		Data:    value,
 	}, nil
 }
 
@@ -390,7 +389,7 @@ func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, o
 	trackedVote := &TrackedParticipation{
 		EventID:    eventID,
 		OutputID:   output.OutputID,
-		MessageID:  output.MessageID,
+		BlockID:    output.BlockID,
 		Amount:     output.Deposit,
 		StartIndex: startIndex,
 		EndIndex:   0,
@@ -839,7 +838,7 @@ func (pm *ParticipationManager) clearStorageForEventID(eventID EventID) error {
 	if err := pm.participationStore.DeletePrefix(currentRewardsKeyForEventPrefix(eventID)); err != nil {
 		return err
 	}
-	if err := pm.participationStore.DeletePrefix(messageKeyForEventPrefix(eventID)); err != nil {
+	if err := pm.participationStore.DeletePrefix(blockKeyForEventPrefix(eventID)); err != nil {
 		return err
 	}
 

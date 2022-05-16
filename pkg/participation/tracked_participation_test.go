@@ -26,7 +26,7 @@ func RandomTrackedParticipation() *participation.TrackedParticipation {
 	return &participation.TrackedParticipation{
 		EventID:    RandEventID(),
 		OutputID:   RandOutputID(),
-		MessageID:  hornet.MessageIDFromSlice(testutil.RandBytes(iotago.MessageIDLength)),
+		BlockID:    hornet.MessageIDFromSlice(testutil.RandBytes(iotago.MessageIDLength)),
 		Amount:     uint64(rand.Int63()),
 		StartIndex: msIndex,
 		EndIndex:   msIndex + 10,
@@ -39,7 +39,7 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 	ms := marshalutil.New(p.ValueBytes())
 	msgID, err := ms.ReadBytes(iotago.MessageIDLength)
 	require.NoError(t, err)
-	require.True(t, bytes.Equal(p.MessageID, msgID))
+	require.True(t, bytes.Equal(p.BlockID, msgID))
 
 	amount, err := ms.ReadUint64()
 	require.NoError(t, err)
@@ -59,7 +59,7 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 func TestTrackedParticipation_Deserialization(t *testing.T) {
 	eventID := RandEventID()
 	outputID := RandOutputID()
-	messageID := hornet.MessageIDFromSlice(testutil.RandBytes(iotago.MessageIDLength))
+	blockID := hornet.MessageIDFromSlice(testutil.RandBytes(iotago.BlockIDLength))
 	amount := uint64(rand.Int63())
 	startIndex := milestone.Index(rand.Int31())
 	endIndex := startIndex + 25
@@ -73,7 +73,7 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	require.Equal(t, 67, len(key))
 
 	ms = marshalutil.New(48)
-	ms.WriteBytes(messageID)
+	ms.WriteBytes(blockID)
 	ms.WriteUint64(amount)
 	ms.WriteUint32(uint32(startIndex))
 	ms.WriteUint32(uint32(endIndex))
@@ -86,7 +86,7 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 
 	require.True(t, bytes.Equal(eventID[:], p.EventID[:]))
 	require.True(t, bytes.Equal(outputID[:], p.OutputID[:]))
-	require.True(t, bytes.Equal(messageID, p.MessageID))
+	require.True(t, bytes.Equal(blockID, p.BlockID[:]))
 	require.Exactly(t, amount, p.Amount)
 	require.Exactly(t, startIndex, p.StartIndex)
 	require.Exactly(t, endIndex, p.EndIndex)

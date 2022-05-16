@@ -14,46 +14,46 @@ import (
 type ParticipationHelper struct {
 	env                   *ParticipationTestEnv
 	wallet                *utils.HDWallet
-	msgBuilder            *testsuite.MessageBuilder
+	blockBuilder          *testsuite.MessageBuilder
 	participationsBuilder *participation.ParticipationsBuilder
 }
 
 type SentParticipations struct {
 	builder *ParticipationHelper
-	message *testsuite.Message
+	block   *testsuite.Message
 }
 
 func (env *ParticipationTestEnv) NewParticipationHelper(wallet *utils.HDWallet) *ParticipationHelper {
-	msgBuilder := env.te.NewMessageBuilder(ParticipationTag).
+	blockBuilder := env.te.NewMessageBuilder(ParticipationTag).
 		LatestMilestoneAsParents()
 
 	return &ParticipationHelper{
 		env:                   env,
 		wallet:                wallet,
-		msgBuilder:            msgBuilder,
+		blockBuilder:          blockBuilder,
 		participationsBuilder: participation.NewParticipationsBuilder(),
 	}
 }
 
 func (b *ParticipationHelper) WholeWalletBalance() *ParticipationHelper {
-	b.msgBuilder.Amount(b.wallet.Balance())
+	b.blockBuilder.Amount(b.wallet.Balance())
 	return b
 }
 
 func (b *ParticipationHelper) Amount(amount uint64) *ParticipationHelper {
-	b.msgBuilder.Amount(amount)
+	b.blockBuilder.Amount(amount)
 	return b
 }
 
 func (b *ParticipationHelper) Parents(parents hornet.MessageIDs) *ParticipationHelper {
 	require.NotEmpty(b.env.t, parents)
-	b.msgBuilder.Parents(parents)
+	b.blockBuilder.Parents(parents)
 	return b
 }
 
 func (b *ParticipationHelper) UsingOutput(output *utxo.Output) *ParticipationHelper {
 	require.NotNil(b.env.t, output)
-	b.msgBuilder.UsingOutput(output)
+	b.blockBuilder.UsingOutput(output)
 	return b
 }
 
@@ -86,22 +86,22 @@ func (b *ParticipationHelper) Build() *testsuite.Message {
 	participationsData, err := votes.Serialize(serializer.DeSeriModePerformValidation, nil)
 	require.NoError(b.env.t, err)
 
-	msg := b.msgBuilder.
+	block := b.blockBuilder.
 		FromWallet(b.wallet).
 		ToWallet(b.wallet).
 		TagData(participationsData).
 		Build()
 
-	return msg
+	return block
 }
 
 func (b *ParticipationHelper) Send() *SentParticipations {
 	return &SentParticipations{
 		builder: b,
-		message: b.Build().Store().BookOnWallets(),
+		block:   b.Build().Store().BookOnWallets(),
 	}
 }
 
-func (c *SentParticipations) Message() *testsuite.Message {
-	return c.message
+func (c *SentParticipations) Block() *testsuite.Message {
+	return c.block
 }

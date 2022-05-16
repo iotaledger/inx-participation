@@ -249,7 +249,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			output, participations, err := env.ParticipationManager().ParticipationsFromMessage(test.ParticipationMessageFromMessage(tt.message), 0)
+			output, participations, err := env.ParticipationManager().ParticipationsFromBlock(test.ParticipationBlockFromBlock(tt.message), 0)
 			require.NoError(t, err)
 
 			if tt.outputExists {
@@ -350,17 +350,17 @@ func TestSingleBallotVote(t *testing.T) {
 	env.IssueMilestone() // 11
 
 	var trackedVote *participation.TrackedParticipation
-	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Message().GeneratedUTXO().OutputID())
+	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Block().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
-	require.Equal(t, castVote.Message().StoredMessageID(), trackedVote.MessageID)
+	require.Equal(t, castVote.Block().StoredMessageID(), trackedVote.BlockID)
 	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
 	require.Equal(t, milestone.Index(11), trackedVote.EndIndex)
 
-	var messageFromParticipationStore *participation.ParticipationMessage
-	messageFromParticipationStore, err = env.ParticipationManager().MessageForEventAndMessageID(eventID, trackedVote.MessageID)
+	var messageFromParticipationStore *participation.ParticipationBlock
+	messageFromParticipationStore, err = env.ParticipationManager().BlockForEventAndBlockID(eventID, trackedVote.BlockID)
 	require.NoError(t, err)
 	require.NotNil(t, messageFromParticipationStore)
-	require.Equal(t, messageFromParticipationStore.Message, castVote.Message().IotaMessage())
+	require.Equal(t, messageFromParticipationStore.Block, castVote.Block().IotaMessage())
 }
 
 func TestInvalidVoteHandling(t *testing.T) {
@@ -437,9 +437,9 @@ func TestInvalidVoteHandling(t *testing.T) {
 	env.IssueMilestone(invalidParticipation.StoredMessageID()) // 9
 
 	var trackedVote *participation.TrackedParticipation
-	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Message().GeneratedUTXO().OutputID())
+	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Block().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
-	require.Equal(t, castVote.Message().StoredMessageID(), trackedVote.MessageID)
+	require.Equal(t, castVote.Block().StoredMessageID(), trackedVote.BlockID)
 	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
 	require.Equal(t, milestone.Index(9), trackedVote.EndIndex)
 
@@ -623,7 +623,7 @@ func TestBallotAddVoteBalanceByMultipleOutputs(t *testing.T) {
 		UsingOutput(transfer.GeneratedUTXO()).
 		AddDefaultBallotVote(eventID).
 		Send()
-	env.IssueMilestone(castVote2.Message().StoredMessageID()) // 10
+	env.IssueMilestone(castVote2.Block().StoredMessageID()) // 10
 	require.Equal(t, 2, len(env.Wallet1.Outputs()))
 
 	// Verify current vote status
@@ -680,8 +680,8 @@ func TestMultipleBallotVotes(t *testing.T) {
 		}).
 		Send()
 
-	_, confStats := env.IssueMilestone(wallet1Vote.Message().StoredMessageID(), wallet2Vote.Message().StoredMessageID(), wallet3Vote.Message().StoredMessageID()) // 8
-	require.Equal(t, 3+1, confStats.MessagesReferenced)                                                                                                           // 3 + milestone itself
+	_, confStats := env.IssueMilestone(wallet1Vote.Block().StoredMessageID(), wallet2Vote.Block().StoredMessageID(), wallet3Vote.Block().StoredMessageID()) // 8
+	require.Equal(t, 3+1, confStats.MessagesReferenced)                                                                                                     // 3 + milestone itself
 	require.Equal(t, 3, confStats.MessagesIncludedWithTransactions)
 	require.Equal(t, 0, confStats.MessagesExcludedWithConflictingTransactions)
 	require.Equal(t, 1, confStats.MessagesExcludedWithoutTransactions) // the milestone
@@ -743,7 +743,7 @@ func TestChangeOpinionMidVote(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote1.Message().StoredMessageID()) // 8
+	env.IssueMilestone(wallet1Vote1.Block().StoredMessageID()) // 8
 
 	// Verify current vote status
 	env.AssertEventParticipationStatus(eventID, 1, 0)
@@ -762,7 +762,7 @@ func TestChangeOpinionMidVote(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote2.Message().StoredMessageID()) // 9
+	env.IssueMilestone(wallet1Vote2.Block().StoredMessageID()) // 9
 
 	// Verify current vote status
 	env.AssertEventParticipationStatus(eventID, 1, 1)
@@ -842,7 +842,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote1.Message().StoredMessageID(), wallet2Vote1.Message().StoredMessageID()) // 6
+	env.IssueMilestone(wallet1Vote1.Block().StoredMessageID(), wallet2Vote1.Block().StoredMessageID()) // 6
 
 	env.AssertEventsCount(1, 0)
 	env.AssertEventParticipationStatus(eventID1, 2, 0)
@@ -863,7 +863,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet3Vote1.Message().StoredMessageID()) // 8
+	env.IssueMilestone(wallet3Vote1.Block().StoredMessageID()) // 8
 
 	env.AssertEventsCount(2, 1)
 	env.AssertEventParticipationStatus(eventID1, 2, 0)
@@ -891,7 +891,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote2.Message().StoredMessageID()) // 11
+	env.IssueMilestone(wallet1Vote2.Block().StoredMessageID()) // 11
 
 	env.AssertEventsCount(2, 2)
 	env.AssertEventParticipationStatus(eventID1, 2, 1)
@@ -906,7 +906,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet4Vote1.Message().StoredMessageID()) // 12
+	env.IssueMilestone(wallet4Vote1.Block().StoredMessageID()) // 12
 
 	env.AssertEventsCount(1, 1)
 	env.AssertEventParticipationStatus(eventID1, 0, 4)
@@ -921,7 +921,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(wallet4Vote2.Message().StoredMessageID()) // 13
+	env.IssueMilestone(wallet4Vote2.Block().StoredMessageID()) // 13
 
 	env.AssertEventsCount(1, 1)
 	env.AssertEventParticipationStatus(eventID1, 0, 4)
@@ -1003,8 +1003,8 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote1.Message().StoredMessageID(), wallet2Vote1.Message().StoredMessageID()) // 6
-	env.IssueMilestone()                                                                                   // 7
+	env.IssueMilestone(wallet1Vote1.Block().StoredMessageID(), wallet2Vote1.Block().StoredMessageID()) // 6
+	env.IssueMilestone()                                                                               // 7
 
 	wallet3Vote1 := env.NewParticipationHelper(env.Wallet3).
 		WholeWalletBalance().
@@ -1015,8 +1015,8 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 		}).
 		Send()
 
-	env.IssueMilestone(wallet3Vote1.Message().StoredMessageID()) //
-	env.IssueMilestone()                                         // 9
+	env.IssueMilestone(wallet3Vote1.Block().StoredMessageID()) //
+	env.IssueMilestone()                                       // 9
 
 	// Add event1 during the event
 	_, err = env.ParticipationManager().StoreEvent(event1)
@@ -1038,7 +1038,7 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 		}).
 		Send()
 
-	env.IssueMilestone(wallet1Vote2.Message().StoredMessageID()) // 11
+	env.IssueMilestone(wallet1Vote2.Block().StoredMessageID()) // 11
 
 	wallet4Vote1 := env.NewParticipationHelper(env.Wallet4).
 		WholeWalletBalance().
@@ -1049,7 +1049,7 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 		}).
 		Send()
 
-	env.IssueMilestone(wallet4Vote1.Message().StoredMessageID()) // 12
+	env.IssueMilestone(wallet4Vote1.Block().StoredMessageID()) // 12
 
 	wallet4Vote2 := env.NewParticipationHelper(env.Wallet4).
 		WholeWalletBalance().
@@ -1060,8 +1060,8 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 		}).
 		Send()
 
-	env.IssueMilestone(wallet4Vote2.Message().StoredMessageID()) // 13
-	env.IssueMilestone()                                         // 14
+	env.IssueMilestone(wallet4Vote2.Block().StoredMessageID()) // 13
+	env.IssueMilestone()                                       // 14
 
 	// Add event2 after the event
 	_, err = env.ParticipationManager().StoreEvent(event2)
@@ -1152,7 +1152,7 @@ func TestStakingRewards(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(stakeWallet1.Message().StoredMessageID(), stakeWallet2.Message().StoredMessageID(), stakeWallet3.Message().StoredMessageID(), preStakeWallet4.Message().StoredMessageID()) // 6
+	env.IssueMilestone(stakeWallet1.Block().StoredMessageID(), stakeWallet2.Block().StoredMessageID(), stakeWallet3.Block().StoredMessageID(), preStakeWallet4.Block().StoredMessageID()) // 6
 	env.AssertEventsCount(1, 0)
 	env.AssertRewardBalance(eventID, env.Wallet1.Address(), 0)
 	env.AssertRewardBalance(eventID, env.Wallet2.Address(), 0)
@@ -1188,7 +1188,7 @@ func TestStakingRewards(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(stakeWallet4.Message().StoredMessageID()) // 9
+	env.IssueMilestone(stakeWallet4.Block().StoredMessageID()) // 9
 	env.AssertRewardBalance(eventID, env.Wallet1.Address(), 2_500_000)
 	env.AssertRewardBalance(eventID, env.Wallet2.Address(), 793_764)
 	env.AssertRewardBalance(eventID, env.Wallet3.Address(), 2_794_988)
@@ -1317,9 +1317,9 @@ func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(stakeWallet1.Message().StoredMessageID(), stakeWallet2.Message().StoredMessageID(), stakeWallet3.Message().StoredMessageID()) // 6
-	env.IssueMilestone()                                                                                                                             // 7
-	env.IssueMilestone()                                                                                                                             // 8
+	env.IssueMilestone(stakeWallet1.Block().StoredMessageID(), stakeWallet2.Block().StoredMessageID(), stakeWallet3.Block().StoredMessageID()) // 6
+	env.IssueMilestone()                                                                                                                       // 7
+	env.IssueMilestone()                                                                                                                       // 8
 
 	stakeWallet4 := env.NewParticipationHelper(env.Wallet4).
 		WholeWalletBalance().
@@ -1329,7 +1329,7 @@ func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
 		}).
 		Send()
 
-	env.IssueMilestone(stakeWallet4.Message().StoredMessageID()) // 9
+	env.IssueMilestone(stakeWallet4.Block().StoredMessageID()) // 9
 
 	cancelStakeWallet4 := env.CancelParticipations(env.Wallet4)
 
