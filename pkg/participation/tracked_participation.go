@@ -11,7 +11,7 @@ type TrackedParticipation struct {
 	// EventID is the ID of the event the participation is made for.
 	EventID EventID
 	// OutputID is the ID of the output the participation was made.
-	OutputID *iotago.OutputID
+	OutputID iotago.OutputID
 	// BlockID is the ID of the block that included the transaction that created the output the participation was made.
 	BlockID iotago.BlockID
 	// Amount is the amount of tokens that were included in the output the participation was made.
@@ -32,12 +32,12 @@ func parseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
 	return o, nil
 }
 
-func parseOutputID(ms *marshalutil.MarshalUtil) (*iotago.OutputID, error) {
+func parseOutputID(ms *marshalutil.MarshalUtil) (iotago.OutputID, error) {
+	o := iotago.OutputID{}
 	bytes, err := ms.ReadBytes(iotago.OutputIDLength)
 	if err != nil {
-		return nil, err
+		return o, err
 	}
-	o := &iotago.OutputID{}
 	copy(o[:], bytes)
 	return o, nil
 }

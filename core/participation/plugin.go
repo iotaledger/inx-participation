@@ -12,11 +12,11 @@ import (
 
 	"github.com/gohornet/hornet/pkg/database"
 	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/shutdown"
 	"github.com/gohornet/inx-participation/pkg/daemon"
 	"github.com/gohornet/inx-participation/pkg/nodebridge"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/app/core/shutdown"
 )
 
 func init() {
@@ -90,7 +90,7 @@ func configure() error {
 			CoreComponent.LogPanicf("Syncing Participation database to disk... failed: %s", err)
 		}
 		CoreComponent.LogInfo("Syncing Participation database to disk... done")
-	}, shutdown.PriorityCloseDatabase); err != nil {
+	}, daemon.PriorityCloseParticipationDatabase); err != nil {
 		CoreComponent.LogPanicf("failed to start worker: %s", err)
 	}
 
@@ -111,7 +111,7 @@ func run() error {
 			return true
 		}); err != nil {
 			CoreComponent.LogWarnf("Listening to LedgerUpdates failed: %s", err)
-			deps.ShutdownHandler.SelfShutdown("disconnected from INX")
+			deps.ShutdownHandler.SelfShutdown("disconnected from INX", false)
 		}
 
 		CoreComponent.LogInfo("Stopping LedgerUpdates ... done")

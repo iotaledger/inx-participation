@@ -163,7 +163,7 @@ func participationKeyForEventOutputsPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func participationKeyForEventAndOutputID(eventID EventID, outputID *iotago.OutputID) []byte {
+func participationKeyForEventAndOutputID(eventID EventID, outputID iotago.OutputID) []byte {
 	m := marshalutil.New(67)
 	m.WriteBytes(participationKeyForEventOutputsPrefix(eventID)) // 32 bytes
 	m.WriteBytes(outputID[:])                                    // 34 bytes
@@ -177,7 +177,7 @@ func participationKeyForEventSpentOutputsPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func participationKeyForEventAndSpentOutputID(eventID EventID, outputID *iotago.OutputID) []byte {
+func participationKeyForEventAndSpentOutputID(eventID EventID, outputID iotago.OutputID) []byte {
 	m := marshalutil.New(67)
 	m.WriteBytes(participationKeyForEventSpentOutputsPrefix(eventID)) // 33 bytes
 	m.WriteBytes(outputID[:])                                         // 34 bytes
@@ -198,7 +198,7 @@ func participationKeyForEventAndAddressPrefix(eventID EventID, addressBytes []by
 	return m.Bytes()
 }
 
-func participationKeyForEventAndAddressOutputID(eventID EventID, addressBytes []byte, outputID *iotago.OutputID) []byte {
+func participationKeyForEventAndAddressOutputID(eventID EventID, addressBytes []byte, outputID iotago.OutputID) []byte {
 	m := marshalutil.New(100)
 	m.WriteBytes(participationKeyForEventAndAddressPrefix(eventID, addressBytes)) // 66 bytes
 	m.WriteBytes(outputID[:])                                                     // 34 bytes
@@ -225,7 +225,7 @@ func (pm *ParticipationManager) ParticipationsForAddressWithoutLocking(eventID E
 	prefix := participationKeyForEventAndAddressPrefix(eventID, addressBytes)
 	prefixLen := len(prefix)
 	if err := pm.participationStore.IterateKeys(prefix, func(key kvstore.Key) bool {
-		outputID := &iotago.OutputID{}
+		outputID := iotago.OutputID{}
 		copy(outputID[:], key[prefixLen:])
 
 		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)
@@ -250,7 +250,7 @@ func (pm *ParticipationManager) ParticipationsForAddressWithoutLocking(eventID E
 	return trackedParticipations, nil
 }
 
-func (pm *ParticipationManager) ParticipationsForOutputID(outputID *iotago.OutputID) ([]*TrackedParticipation, error) {
+func (pm *ParticipationManager) ParticipationsForOutputID(outputID iotago.OutputID) ([]*TrackedParticipation, error) {
 	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
 	pm.RLock()
 	defer pm.RUnlock()
@@ -270,8 +270,8 @@ func (pm *ParticipationManager) ParticipationsForOutputID(outputID *iotago.Outpu
 	return trackedParticipations, nil
 }
 
-func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID EventID, outputID *iotago.OutputID) (*TrackedParticipation, error) {
-	readOutput := func(eventID EventID, outputID *iotago.OutputID) (kvstore.Key, kvstore.Value, error) {
+func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID EventID, outputID iotago.OutputID) (*TrackedParticipation, error) {
+	readOutput := func(eventID EventID, outputID iotago.OutputID) (kvstore.Key, kvstore.Value, error) {
 		key := participationKeyForEventAndOutputID(eventID, outputID)
 		value, err := pm.participationStore.Get(key)
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -283,7 +283,7 @@ func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID E
 		return key, value, nil
 	}
 
-	readSpent := func(eventID EventID, outputID *iotago.OutputID) (kvstore.Key, kvstore.Value, error) {
+	readSpent := func(eventID EventID, outputID iotago.OutputID) (kvstore.Key, kvstore.Value, error) {
 		key := participationKeyForEventAndSpentOutputID(eventID, outputID)
 		value, err := pm.participationStore.Get(key)
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -791,7 +791,7 @@ func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID Event
 			return false
 		}
 
-		outputID := &iotago.OutputID{}
+		outputID := iotago.OutputID{}
 		copy(outputID[:], key[prefixLen+addrLen:])
 
 		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)

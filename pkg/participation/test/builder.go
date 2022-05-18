@@ -3,28 +3,28 @@ package test
 import (
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/utxo"
 	"github.com/gohornet/hornet/pkg/testsuite"
 	"github.com/gohornet/hornet/pkg/testsuite/utils"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 type ParticipationHelper struct {
 	env                   *ParticipationTestEnv
 	wallet                *utils.HDWallet
-	blockBuilder          *testsuite.MessageBuilder
+	blockBuilder          *testsuite.BlockBuilder
 	participationsBuilder *participation.ParticipationsBuilder
 }
 
 type SentParticipations struct {
 	builder *ParticipationHelper
-	block   *testsuite.Message
+	block   *testsuite.Block
 }
 
 func (env *ParticipationTestEnv) NewParticipationHelper(wallet *utils.HDWallet) *ParticipationHelper {
-	blockBuilder := env.te.NewMessageBuilder(ParticipationTag).
+	blockBuilder := env.te.NewBlockBuilder(ParticipationTag).
 		LatestMilestoneAsParents()
 
 	return &ParticipationHelper{
@@ -45,7 +45,7 @@ func (b *ParticipationHelper) Amount(amount uint64) *ParticipationHelper {
 	return b
 }
 
-func (b *ParticipationHelper) Parents(parents hornet.MessageIDs) *ParticipationHelper {
+func (b *ParticipationHelper) Parents(parents iotago.BlockIDs) *ParticipationHelper {
 	require.NotEmpty(b.env.t, parents)
 	b.blockBuilder.Parents(parents)
 	return b
@@ -79,7 +79,7 @@ func (b *ParticipationHelper) AddParticipation(participation *participation.Part
 	return b
 }
 
-func (b *ParticipationHelper) Build() *testsuite.Message {
+func (b *ParticipationHelper) Build() *testsuite.Block {
 	votes, err := b.participationsBuilder.Build()
 	require.NoError(b.env.t, err)
 
@@ -102,6 +102,6 @@ func (b *ParticipationHelper) Send() *SentParticipations {
 	}
 }
 
-func (c *SentParticipations) Block() *testsuite.Message {
+func (c *SentParticipations) Block() *testsuite.Block {
 	return c.block
 }

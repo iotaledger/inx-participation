@@ -117,7 +117,7 @@ func (n *NodeBridge) participationOutputFromINXOutput(output *inx.LedgerOutput) 
 	}
 }
 
-func (n *NodeBridge) OutputForOutputID(outputID *iotago.OutputID) (*participation.ParticipationOutput, error) {
+func (n *NodeBridge) OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
 	resp, err := n.client.ReadOutput(context.Background(), inx.NewOutputId(outputID))
 	if err != nil {
 		return nil, err

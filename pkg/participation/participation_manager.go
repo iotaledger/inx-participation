@@ -26,7 +26,7 @@ var (
 type ProtocolParametersProvider func() *iotago.ProtocolParameters
 type NodeStatusProvider func() (confirmedIndex milestone.Index, pruningIndex milestone.Index)
 type BlockForBlockIDProvider func(blockID iotago.BlockID) (*ParticipationBlock, error)
-type OutputForOutputIDProvider func(outputID *iotago.OutputID) (*ParticipationOutput, error)
+type OutputForOutputIDProvider func(outputID iotago.OutputID) (*ParticipationOutput, error)
 type LedgerUpdatesProvider func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool) error
 
 // ParticipationManager is used to track the outcome of participation in the tangle.
@@ -746,12 +746,7 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 }
 
 func serializedAddressFromOutput(output *iotago.BasicOutput) ([]byte, error) {
-	unlockConditions, err := output.UnlockConditions().Set()
-	if err != nil {
-		return nil, err
-	}
-
-	outputAddress, err := unlockConditions.Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
+	outputAddress, err := output.UnlockConditionsSet().Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -841,12 +836,12 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 		return nil, nil, nil
 	}
 
-	outputID := iotago.OutputIDFromTransactionIDAndIndex(*txID, 0)
+	outputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 0)
 
 	return &ParticipationOutput{
 		BlockID:  msg.BlockID,
-		OutputID: &outputID,
-		Address:  depositOutput.UnlockConditions().MustSet().Address().Address,
+		OutputID: outputID,
+		Address:  depositOutput.UnlockConditionsSet().Address().Address,
 		Deposit:  depositOutput.Deposit(),
 	}, participations, nil
 }

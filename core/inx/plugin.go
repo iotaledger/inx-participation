@@ -5,10 +5,10 @@ import (
 
 	"go.uber.org/dig"
 
-	"github.com/gohornet/hornet/pkg/shutdown"
 	"github.com/gohornet/inx-participation/pkg/daemon"
 	"github.com/gohornet/inx-participation/pkg/nodebridge"
 	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/app/core/shutdown"
 )
 
 func init() {

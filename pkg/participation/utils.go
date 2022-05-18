@@ -13,7 +13,7 @@ type ParticipationBlock struct {
 
 type ParticipationOutput struct {
 	BlockID  iotago.BlockID
-	OutputID *iotago.OutputID
+	OutputID iotago.OutputID
 	Address  iotago.Address
 	Deposit  uint64
 }
@@ -50,14 +50,14 @@ func (msg *ParticipationBlock) TransactionEssenceTaggedData() *iotago.TaggedData
 	return nil
 }
 
-func (msg *ParticipationBlock) TransactionEssenceUTXOInputs() []*iotago.OutputID {
-	var inputs []*iotago.OutputID
+func (msg *ParticipationBlock) TransactionEssenceUTXOInputs() iotago.OutputIDs {
+	var inputs iotago.OutputIDs
 	if essence := msg.TransactionEssence(); essence != nil {
 		for _, input := range essence.Inputs {
 			switch utxoInput := input.(type) {
 			case *iotago.UTXOInput:
 				id := utxoInput.ID()
-				inputs = append(inputs, &id)
+				inputs = append(inputs, id)
 			default:
 				return nil
 			}

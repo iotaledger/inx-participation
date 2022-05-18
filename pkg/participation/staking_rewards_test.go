@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/gohornet/inx-participation/pkg/participation/test"
@@ -82,7 +81,7 @@ func (s *stakingTestEnv) StakeWalletAndIssueMilestone() {
 			Answers: []byte{},
 		}).
 		Send()
-	s.IssueMilestone(p.Block().StoredMessageID())
+	s.IssueMilestone(p.Block().StoredBlockID())
 }
 
 func (s *stakingTestEnv) StakeWalletThenIncreaseBalanceAndIssueMilestone() {
@@ -95,22 +94,22 @@ func (s *stakingTestEnv) StakeWalletThenIncreaseBalanceAndIssueMilestone() {
 		Send()
 
 	t := s.env.Transfer(s.env.GenesisWallet, s.env.Wallet1, 1_500_000)
-	s.IssueMilestone(p.Block().StoredMessageID(), t.StoredMessageID())
+	s.IssueMilestone(p.Block().StoredBlockID(), t.StoredBlockID())
 	s.AssertWalletBalance(2_500_000)
 }
 
 func (s *stakingTestEnv) CancelStakingAndIssueMilestone() {
 	cancelStake := s.env.CancelParticipations(s.env.Wallet1)
-	s.IssueMilestone(cancelStake.StoredMessageID())
+	s.IssueMilestone(cancelStake.StoredBlockID())
 }
 
 func (s *stakingTestEnv) IncreaseWalletBalanceAndIssueMilestone() {
 	transfer := s.env.Transfer(s.env.GenesisWallet, s.env.Wallet1, 1_500_000)
-	s.IssueMilestone(transfer.StoredMessageID())
+	s.IssueMilestone(transfer.StoredBlockID())
 	s.AssertWalletBalance(2_500_000)
 }
 
-func (s *stakingTestEnv) IssueMilestone(parents ...hornet.MessageID) {
+func (s *stakingTestEnv) IssueMilestone(parents ...iotago.BlockID) {
 	s.env.IssueMilestone(parents...)
 }
 
@@ -570,8 +569,8 @@ func assertTotalRewardsFromParticipations(t *testing.T, participations []struct 
 	for _, p := range participations {
 		rewards, err := env.ParticipationManager().RewardsForTrackedParticipationWithoutLocking(&participation.TrackedParticipation{
 			EventID:    eventID,
-			OutputID:   &iotago.OutputID{},
-			BlockID:    hornet.NullMessageID(),
+			OutputID:   iotago.OutputID{},
+			BlockID:    iotago.EmptyBlockID(),
 			Amount:     p.amount,
 			StartIndex: p.startIndex,
 			EndIndex:   p.endIndex,
