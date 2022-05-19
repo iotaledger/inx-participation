@@ -7,8 +7,8 @@ const (
 	// Holds the events
 	ParticipationStoreKeyPrefixEvents byte = 1
 
-	// Holds the messages containing participations
-	ParticipationStoreKeyPrefixMessages byte = 2
+	// Holds the blocks containing participations
+	ParticipationStoreKeyPrefixBlocks byte = 2
 
 	// Tracks all active and past participations
 	ParticipationStoreKeyPrefixTrackedOutputs         byte = 3

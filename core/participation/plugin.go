@@ -12,12 +12,11 @@ import (
 
 	"github.com/gohornet/hornet/pkg/database"
 	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/shutdown"
 	"github.com/gohornet/inx-participation/pkg/daemon"
 	"github.com/gohornet/inx-participation/pkg/nodebridge"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/app"
-	"github.com/iotaledger/hive.go/configuration"
+	"github.com/iotaledger/hive.go/app/core/shutdown"
 )
 
 func init() {
@@ -40,7 +39,6 @@ var (
 
 type dependencies struct {
 	dig.In
-	AppConfig            *configuration.Configuration `name:"appConfig"`
 	ParticipationManager *participation.ParticipationManager
 	NodeBridge           *nodebridge.NodeBridge
 	ShutdownHandler      *shutdown.ShutdownHandler
@@ -50,13 +48,12 @@ func provide(c *dig.Container) error {
 
 	type participationDeps struct {
 		dig.In
-		AppConfig  *configuration.Configuration `name:"appConfig"`
 		NodeBridge *nodebridge.NodeBridge
 	}
 
 	return c.Provide(func(deps participationDeps) *participation.ParticipationManager {
 
-		participationStore, err := database.StoreWithDefaultSettings(deps.AppConfig.String(CfgParticipationDatabasePath), true, database.EngineRocksDB)
+		participationStore, err := database.StoreWithDefaultSettings(ParamsParticipation.DatabasePath, true, database.EngineRocksDB)
 		if err != nil {
 			CoreComponent.LogPanic(err)
 		}
@@ -65,7 +62,7 @@ func provide(c *dig.Container) error {
 			participationStore,
 			deps.NodeBridge.ProtocolParameters,
 			deps.NodeBridge.NodeStatus,
-			deps.NodeBridge.MessageForMessageID,
+			deps.NodeBridge.BlockForBlockID,
 			deps.NodeBridge.OutputForOutputID,
 			deps.NodeBridge.LedgerUpdates,
 		)
@@ -93,7 +90,7 @@ func configure() error {
 			CoreComponent.LogPanicf("Syncing Participation database to disk... failed: %s", err)
 		}
 		CoreComponent.LogInfo("Syncing Participation database to disk... done")
-	}, shutdown.PriorityCloseDatabase); err != nil {
+	}, daemon.PriorityCloseParticipationDatabase); err != nil {
 		CoreComponent.LogPanicf("failed to start worker: %s", err)
 	}
 
@@ -114,7 +111,7 @@ func run() error {
 			return true
 		}); err != nil {
 			CoreComponent.LogWarnf("Listening to LedgerUpdates failed: %s", err)
-			deps.ShutdownHandler.SelfShutdown("disconnected from INX")
+			deps.ShutdownHandler.SelfShutdown("disconnected from INX", false)
 		}
 
 		CoreComponent.LogInfo("Stopping LedgerUpdates ... done")
@@ -126,24 +123,23 @@ func run() error {
 	if err := CoreComponent.Daemon().BackgroundWorker("API", func(ctx context.Context) {
 		CoreComponent.LogInfo("Starting API ... done")
 
-		bindAddr := deps.AppConfig.String(CfgParticipationBindAddress)
 		e := newEcho()
 		setupRoutes(e)
 		go func() {
-			CoreComponent.LogInfof("You can now access the API using: http://%s", bindAddr)
-			if err := e.Start(bindAddr); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsParticipation.BindAddress)
+			if err := e.Start(ParamsParticipation.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				CoreComponent.LogWarnf("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
-		if err := deps.NodeBridge.RegisterAPIRoute(APIRoute, bindAddr); err != nil {
+		if err := deps.NodeBridge.RegisterAPIRoute(APIRoute, ParamsParticipation.BindAddress); err != nil {
 			CoreComponent.LogWarnf("Error registering INX api route (%s)", err)
 		}
 
 		<-ctx.Done()
 		CoreComponent.LogInfo("Stopping API ...")
 
-		if err := deps.NodeBridge.UnregisterAPIRoute(APIRoute, bindAddr); err != nil {
+		if err := deps.NodeBridge.UnregisterAPIRoute(APIRoute); err != nil {
 			CoreComponent.LogWarnf("Error unregistering INX api route (%s)", err)
 		}
 

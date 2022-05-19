@@ -1,7 +1,6 @@
 package participation
 
 import (
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hive.go/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -12,9 +11,9 @@ type TrackedParticipation struct {
 	// EventID is the ID of the event the participation is made for.
 	EventID EventID
 	// OutputID is the ID of the output the participation was made.
-	OutputID *iotago.OutputID
-	// MessageID is the ID of the message that included the transaction that created the output the participation was made.
-	MessageID hornet.MessageID
+	OutputID iotago.OutputID
+	// BlockID is the ID of the block that included the transaction that created the output the participation was made.
+	BlockID iotago.BlockID
 	// Amount is the amount of tokens that were included in the output the participation was made.
 	Amount uint64
 	// StartIndex is the milestone index the participation started.
@@ -33,22 +32,24 @@ func parseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
 	return o, nil
 }
 
-func parseOutputID(ms *marshalutil.MarshalUtil) (*iotago.OutputID, error) {
+func parseOutputID(ms *marshalutil.MarshalUtil) (iotago.OutputID, error) {
+	o := iotago.OutputID{}
 	bytes, err := ms.ReadBytes(iotago.OutputIDLength)
 	if err != nil {
-		return nil, err
+		return o, err
 	}
-	o := &iotago.OutputID{}
 	copy(o[:], bytes)
 	return o, nil
 }
 
-func parseMessageID(ms *marshalutil.MarshalUtil) (hornet.MessageID, error) {
-	bytes, err := ms.ReadBytes(iotago.MessageIDLength)
+func parseBlockID(ms *marshalutil.MarshalUtil) (iotago.BlockID, error) {
+	bytes, err := ms.ReadBytes(iotago.BlockIDLength)
 	if err != nil {
-		return nil, err
+		return iotago.BlockID{}, err
 	}
-	return hornet.MessageIDFromSlice(bytes), nil
+	blockID := iotago.BlockID{}
+	copy(blockID[:], bytes)
+	return blockID, nil
 }
 
 func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipation, error) {
@@ -82,7 +83,7 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 
 	mValue := marshalutil.New(value)
 
-	messageID, err := parseMessageID(mValue)
+	blockID, err := parseBlockID(mValue)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 	return &TrackedParticipation{
 		EventID:    eventID,
 		OutputID:   outputID,
-		MessageID:  messageID,
+		BlockID:    blockID,
 		Amount:     amount,
 		StartIndex: milestone.Index(start),
 		EndIndex:   milestone.Index(end),
@@ -114,7 +115,7 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 
 func (t *TrackedParticipation) ValueBytes() []byte {
 	m := marshalutil.New(48)
-	m.WriteBytes(t.MessageID)           // 32 bytes
+	m.WriteBytes(t.BlockID[:])          // 32 bytes
 	m.WriteUint64(t.Amount)             // 8 bytes
 	m.WriteUint32(uint32(t.StartIndex)) // 4 bytes
 	m.WriteUint32(uint32(t.EndIndex))   // 4 bytes

@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/logger"
@@ -79,22 +78,22 @@ func (n *NodeBridge) NodeStatus() (confirmedIndex milestone.Index, pruningIndex 
 	return milestone.Index(status.GetConfirmedMilestone().GetMilestoneIndex()), milestone.Index(status.GetPruningIndex())
 }
 
-func (n *NodeBridge) MessageForMessageID(messageID hornet.MessageID) (*participation.ParticipationMessage, error) {
-	inxMsg, err := n.client.ReadMessage(context.Background(), inx.NewMessageId(messageID.ToArray()))
+func (n *NodeBridge) BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
+	inxMsg, err := n.client.ReadBlock(context.Background(), inx.NewBlockId(blockID))
 	if err != nil {
 		return nil, err
 	}
 
-	iotaMsg, err := inxMsg.UnwrapMessage(serializer.DeSeriModeNoValidation, nil)
+	iotaMsg, err := inxMsg.UnwrapBlock(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
-		// if the message was included, there must be a message
-		return nil, fmt.Errorf("error deserializing message: %w", err)
+		// if the block was included, there must be a block
+		return nil, fmt.Errorf("error deserializing block: %w", err)
 	}
 
-	return &participation.ParticipationMessage{
-		MessageID: messageID,
-		Message:   iotaMsg,
-		Data:      inxMsg.GetData(),
+	return &participation.ParticipationBlock{
+		BlockID: blockID,
+		Block:   iotaMsg,
+		Data:    inxMsg.GetData(),
 	}, nil
 }
 
@@ -109,19 +108,16 @@ func (n *NodeBridge) participationOutputFromINXOutput(output *inx.LedgerOutput) 
 		return nil
 	}
 
-	unlockConditions, err := iotaOutput.UnlockConditions().Set()
-	if err != nil {
-		return nil
-	}
+	unlockConditions := iotaOutput.UnlockConditionsSet()
 	return &participation.ParticipationOutput{
-		MessageID: hornet.MessageIDFromArray(output.UnwrapMessageID()),
-		OutputID:  output.UnwrapOutputID(),
-		Address:   unlockConditions.Address().Address,
-		Deposit:   iotaOutput.Deposit(),
+		BlockID:  output.UnwrapBlockID(),
+		OutputID: output.UnwrapOutputID(),
+		Address:  unlockConditions.Address().Address,
+		Deposit:  iotaOutput.Deposit(),
 	}
 }
 
-func (n *NodeBridge) OutputForOutputID(outputID *iotago.OutputID) (*participation.ParticipationOutput, error) {
+func (n *NodeBridge) OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
 	resp, err := n.client.ReadOutput(context.Background(), inx.NewOutputId(outputID))
 	if err != nil {
 		return nil, err
@@ -185,25 +181,22 @@ func (n *NodeBridge) LedgerUpdates(ctx context.Context, startIndex milestone.Ind
 	return nil
 }
 
-func apiRequest(route string, bindAddress string) (*inx.APIRouteRequest, error) {
+func (n *NodeBridge) RegisterAPIRoute(route string, bindAddress string) error {
 	bindAddressParts := strings.Split(bindAddress, ":")
 	if len(bindAddressParts) != 2 {
-		return nil, fmt.Errorf("Invalid address %s", bindAddress)
+		return fmt.Errorf("Invalid address %s", bindAddress)
 	}
 	port, err := strconv.ParseInt(bindAddressParts[1], 10, 32)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &inx.APIRouteRequest{
+	apiReq := &inx.APIRouteRequest{
 		Route: route,
 		Host:  bindAddressParts[0],
 		Port:  uint32(port),
-	}, nil
-}
+	}
 
-func (n *NodeBridge) RegisterAPIRoute(route string, bindAddress string) error {
-	apiReq, err := apiRequest(route, bindAddress)
 	if err != nil {
 		return err
 	}
@@ -211,11 +204,10 @@ func (n *NodeBridge) RegisterAPIRoute(route string, bindAddress string) error {
 	return err
 }
 
-func (n *NodeBridge) UnregisterAPIRoute(route string, bindAddress string) error {
-	apiReq, err := apiRequest(route, bindAddress)
-	if err != nil {
-		return err
+func (n *NodeBridge) UnregisterAPIRoute(route string) error {
+	apiReq := &inx.APIRouteRequest{
+		Route: route,
 	}
-	_, err = n.client.UnregisterAPIRoute(context.Background(), apiReq)
+	_, err := n.client.UnregisterAPIRoute(context.Background(), apiReq)
 	return err
 }

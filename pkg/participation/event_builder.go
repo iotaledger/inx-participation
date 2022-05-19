@@ -26,7 +26,7 @@ type EventBuilder struct {
 	err   error
 }
 
-// Payload sets the payload to embed within the message.
+// Payload sets the payload to embed within the block.
 func (rb *EventBuilder) Payload(seri serializer.Serializable) *EventBuilder {
 	if rb.err != nil {
 		return rb

@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/gohornet/hornet/pkg/model/storage"
 	"github.com/iotaledger/hive.go/kvstore"
@@ -26,8 +25,8 @@ var (
 
 type ProtocolParametersProvider func() *iotago.ProtocolParameters
 type NodeStatusProvider func() (confirmedIndex milestone.Index, pruningIndex milestone.Index)
-type MessageForMessageIDProvider func(messageID hornet.MessageID) (*ParticipationMessage, error)
-type OutputForOutputIDProvider func(outputID *iotago.OutputID) (*ParticipationOutput, error)
+type BlockForBlockIDProvider func(blockID iotago.BlockID) (*ParticipationBlock, error)
+type OutputForOutputIDProvider func(outputID iotago.OutputID) (*ParticipationOutput, error)
 type LedgerUpdatesProvider func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool) error
 
 // ParticipationManager is used to track the outcome of participation in the tangle.
@@ -35,11 +34,11 @@ type ParticipationManager struct {
 	// lock used to secure the state of the ParticipationManager.
 	syncutils.RWMutex
 
-	protocolParametersFunc  ProtocolParametersProvider
-	nodeStatusFunc          NodeStatusProvider
-	messageForMessageIDFunc MessageForMessageIDProvider
-	outputForOutputIDFunc   OutputForOutputIDProvider
-	ledgerUpdatesFunc       LedgerUpdatesProvider
+	protocolParametersFunc ProtocolParametersProvider
+	nodeStatusFunc         NodeStatusProvider
+	blockForBlockIDFunc    BlockForBlockIDProvider
+	outputForOutputIDFunc  OutputForOutputIDProvider
+	ledgerUpdatesFunc      LedgerUpdatesProvider
 
 	// holds the ParticipationManager options.
 	opts *Options
@@ -83,7 +82,7 @@ func NewManager(
 	participationStore kvstore.KVStore,
 	protocolParametersProvider ProtocolParametersProvider,
 	nodeStatusProvider NodeStatusProvider,
-	messageForMessageIDProvider MessageForMessageIDProvider,
+	blockForBlockIDProvider BlockForBlockIDProvider,
 	outputForOutputIDProvider OutputForOutputIDProvider,
 	ledgerUpdatesProvider LedgerUpdatesProvider,
 	opts ...Option) (*ParticipationManager, error) {
@@ -100,7 +99,7 @@ func NewManager(
 	manager := &ParticipationManager{
 		protocolParametersFunc:   protocolParametersProvider,
 		nodeStatusFunc:           nodeStatusProvider,
-		messageForMessageIDFunc:  messageForMessageIDProvider,
+		blockForBlockIDFunc:      blockForBlockIDProvider,
 		outputForOutputIDFunc:    outputForOutputIDProvider,
 		ledgerUpdatesFunc:        ledgerUpdatesProvider,
 		participationStore:       participationStore,
@@ -424,12 +423,12 @@ func (pm *ParticipationManager) ApplyNewLedgerUpdate(index milestone.Index, crea
 // 	- The Indexation must match the configured Indexation.
 //  - The participation data must be parseable.
 func (pm *ParticipationManager) applyNewUTXOForEvents(index milestone.Index, newOutput *ParticipationOutput, events map[EventID]*Event) error {
-	msg, err := pm.messageForMessageIDFunc(newOutput.MessageID)
+	block, err := pm.blockForBlockIDFunc(newOutput.BlockID)
 	if err != nil {
 		return err
 	}
 
-	depositOutput, participations, err := pm.ParticipationsFromMessage(msg, index)
+	depositOutput, participations, err := pm.ParticipationsFromBlock(block, index)
 	if err != nil {
 		return err
 	}
@@ -453,8 +452,8 @@ func (pm *ParticipationManager) applyNewUTXOForEvents(index milestone.Index, new
 
 	for _, participation := range validParticipations {
 
-		// Store the message holding the participation for this event
-		if err := pm.storeMessageForEvent(participation.EventID, msg, mutations); err != nil {
+		// Store the block holding the participation for this event
+		if err := pm.storeBlockForEvent(participation.EventID, block, mutations); err != nil {
 			mutations.Cancel()
 			return err
 		}
@@ -498,22 +497,22 @@ func (pm *ParticipationManager) applyNewUTXOForEvents(index milestone.Index, new
 // applySpentUTXOForEvents checks if the spent UTXO was part of a participation transaction.
 func (pm *ParticipationManager) applySpentUTXOForEvents(index milestone.Index, spent *ParticipationOutput, events map[EventID]*Event) error {
 
-	// Fetch the message, this must have been stored for at least one of the events
-	var msg *ParticipationMessage
+	// Fetch the block, this must have been stored for at least one of the events
+	var msg *ParticipationBlock
 	for eID := range events {
-		// Check if we tracked the participation initially, event.g. saved the Message that created this UTXO
-		messageForEvent, err := pm.MessageForEventAndMessageID(eID, spent.MessageID)
+		// Check if we tracked the participation initially, event.g. saved the Block that created this UTXO
+		blockForEvent, err := pm.BlockForEventAndBlockID(eID, spent.BlockID)
 		if err != nil {
 			return err
 		}
-		if messageForEvent != nil {
-			msg = messageForEvent
+		if blockForEvent != nil {
+			msg = blockForEvent
 			break
 		}
 	}
 
 	if msg == nil {
-		// This UTXO had no valid participation, so we did not store the message for it
+		// This UTXO had no valid participation, so we did not store the block for it
 		return nil
 	}
 
@@ -747,19 +746,14 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 }
 
 func serializedAddressFromOutput(output *iotago.BasicOutput) ([]byte, error) {
-	unlockConditions, err := output.UnlockConditions().Set()
-	if err != nil {
-		return nil, err
-	}
-
-	outputAddress, err := unlockConditions.Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
+	outputAddress, err := output.UnlockConditionsSet().Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
 	return outputAddress, nil
 }
 
-func (pm *ParticipationManager) ParticipationsFromMessage(msg *ParticipationMessage, msIndex milestone.Index) (*ParticipationOutput, []*Participation, error) {
+func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex milestone.Index) (*ParticipationOutput, []*Participation, error) {
 	transaction := msg.Transaction()
 	if transaction == nil {
 		// Do not handle outputs from migrations
@@ -769,7 +763,7 @@ func (pm *ParticipationManager) ParticipationsFromMessage(msg *ParticipationMess
 
 	txEssence := msg.TransactionEssence()
 	if txEssence == nil {
-		// if the message was included, there must be a transaction payload essence
+		// if the block was included, there must be a transaction payload essence
 		return nil, nil, errors.New("no transaction transactionEssence found")
 	}
 
@@ -842,13 +836,13 @@ func (pm *ParticipationManager) ParticipationsFromMessage(msg *ParticipationMess
 		return nil, nil, nil
 	}
 
-	outputID := iotago.OutputIDFromTransactionIDAndIndex(*txID, 0)
+	outputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 0)
 
 	return &ParticipationOutput{
-		MessageID: msg.MessageID,
-		OutputID:  &outputID,
-		Address:   depositOutput.UnlockConditions().MustSet().Address().Address,
-		Deposit:   depositOutput.Deposit(),
+		BlockID:  msg.BlockID,
+		OutputID: outputID,
+		Address:  depositOutput.UnlockConditionsSet().Address().Address,
+		Deposit:  depositOutput.Deposit(),
 	}, participations, nil
 }
 

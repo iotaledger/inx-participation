@@ -16,8 +16,8 @@ type CreateEventResponse struct {
 
 // TrackedParticipation holds the information for each tracked participation.
 type TrackedParticipation struct {
-	// MessageID is the ID of the message that included the transaction that created the output the participation was made.
-	MessageID string `json:"messageId"`
+	// BlockID is the ID of the block that included the transaction that created the output the participation was made.
+	BlockID string `json:"blockId"`
 	// Amount is the amount of tokens that were included in the output the participation was made.
 	Amount uint64 `json:"amount"`
 	// StartMilestoneIndex is the milestone index the participation started.

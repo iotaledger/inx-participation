@@ -203,7 +203,7 @@ func getOutputStatus(c echo.Context) (*OutputStatusResponse, error) {
 
 	for _, trackedParticipation := range trackedParticipations {
 		t := &TrackedParticipation{
-			MessageID:           trackedParticipation.MessageID.ToHex(),
+			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
@@ -271,7 +271,7 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 		for _, trackedParticipation := range participations {
 
 			t := &TrackedParticipation{
-				MessageID:           trackedParticipation.MessageID.ToHex(),
+				BlockID:             trackedParticipation.BlockID.ToHex(),
 				Amount:              trackedParticipation.Amount,
 				StartMilestoneIndex: trackedParticipation.StartIndex,
 				EndMilestoneIndex:   trackedParticipation.EndIndex,
@@ -300,7 +300,7 @@ func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	}
 	if err := deps.ParticipationManager.ForEachActiveParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
 		t := &TrackedParticipation{
-			MessageID:           trackedParticipation.MessageID.ToHex(),
+			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
@@ -324,7 +324,7 @@ func getPastParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	}
 	if err := deps.ParticipationManager.ForEachPastParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
 		t := &TrackedParticipation{
-			MessageID:           trackedParticipation.MessageID.ToHex(),
+			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,

@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/gohornet/hornet/pkg/model/storage"
 	"github.com/gohornet/hornet/pkg/model/utxo"
@@ -71,7 +70,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	}
 
 	// Fund Wallet1
-	messageA := te.NewMessageBuilder("A").
+	messageA := te.NewBlockBuilder("A").
 		Parents(te.LastMilestoneParents()).
 		FromWallet(genesisWallet).
 		ToWallet(seed1Wallet).
@@ -81,8 +80,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet2
-	messageB := te.NewMessageBuilder("B").
-		Parents(append(te.LastMilestoneParents(), messageA.StoredMessageID())).
+	messageB := te.NewBlockBuilder("B").
+		Parents(append(te.LastMilestoneParents(), messageA.StoredBlockID())).
 		FromWallet(genesisWallet).
 		ToWallet(seed2Wallet).
 		Amount(wallet2Balance).
@@ -91,8 +90,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet3
-	messageC := te.NewMessageBuilder("C").
-		Parents(append(te.LastMilestoneParents(), messageB.StoredMessageID())).
+	messageC := te.NewBlockBuilder("C").
+		Parents(append(te.LastMilestoneParents(), messageB.StoredBlockID())).
 		FromWallet(genesisWallet).
 		ToWallet(seed3Wallet).
 		Amount(wallet3Balance).
@@ -101,8 +100,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet4
-	messageD := te.NewMessageBuilder("D").
-		Parents(append(te.LastMilestoneParents(), messageC.StoredMessageID())).
+	messageD := te.NewBlockBuilder("D").
+		Parents(append(te.LastMilestoneParents(), messageC.StoredBlockID())).
 		FromWallet(genesisWallet).
 		ToWallet(seed4Wallet).
 		Amount(wallet4Balance).
@@ -110,14 +109,14 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		Store().
 		BookOnWallets()
 
-	// Confirming milestone at message D
-	_, confStats := te.IssueAndConfirmMilestoneOnTips(hornet.MessageIDs{messageD.StoredMessageID()}, false)
+	// Confirming milestone at block D
+	_, confStats := te.IssueAndConfirmMilestoneOnTips(iotago.BlockIDs{messageD.StoredBlockID()}, false)
 	if assertSteps {
 
-		require.Equal(t, 4+1, confStats.MessagesReferenced) // 4 + milestone itself
-		require.Equal(t, 4, confStats.MessagesIncludedWithTransactions)
-		require.Equal(t, 0, confStats.MessagesExcludedWithConflictingTransactions)
-		require.Equal(t, 1, confStats.MessagesExcludedWithoutTransactions) // the milestone
+		require.Equal(t, 4+1, confStats.BlocksReferenced) // 4 + milestone itself
+		require.Equal(t, 4, confStats.BlocksIncludedWithTransactions)
+		require.Equal(t, 0, confStats.BlocksExcludedWithConflictingTransactions)
+		require.Equal(t, 1, confStats.BlocksExcludedWithoutTransactions) // the milestone
 
 		// Verify balances
 		te.AssertWalletBalance(genesisWallet, te.ProtocolParameters().TokenSupply-wallet1Balance-wallet2Balance-wallet3Balance-wallet4Balance)
@@ -137,19 +136,19 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func() (confirmedIndex milestone.Index, pruningIndex milestone.Index) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
-		func(messageID hornet.MessageID) (*participation.ParticipationMessage, error) {
-			cachedMsg := te.Storage().CachedMessageOrNil(messageID)
-			if cachedMsg == nil {
+		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
+			cachedBlock := te.Storage().CachedBlockOrNil(blockID)
+			if cachedBlock == nil {
 				return nil, nil
 			}
-			defer cachedMsg.Release(true)
-			return &participation.ParticipationMessage{
-				MessageID: messageID,
-				Message:   cachedMsg.Message().Message(),
-				Data:      cachedMsg.Message().Data(),
+			defer cachedBlock.Release(true)
+			return &participation.ParticipationBlock{
+				BlockID: blockID,
+				Block:   cachedBlock.Block().Block(),
+				Data:    cachedBlock.Block().Data(),
 			}, nil
 		},
-		func(outputID *iotago.OutputID) (*participation.ParticipationOutput, error) {
+		func(outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
 			output, err := te.UTXOManager().ReadOutputByOutputIDWithoutLocking(outputID)
 			if err != nil {
 				return nil, err
@@ -158,10 +157,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				return nil, nil
 			}
 			return &participation.ParticipationOutput{
-				MessageID: output.MessageID(),
-				OutputID:  outputID,
-				Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-				Deposit:   output.Deposit(),
+				BlockID:  output.BlockID(),
+				OutputID: outputID,
+				Address:  output.Output().UnlockConditionsSet().Address().Address,
+				Deposit:  output.Deposit(),
 			}, nil
 		},
 		func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) bool) error {
@@ -185,10 +184,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 						continue
 					}
 					created = append(created, &participation.ParticipationOutput{
-						MessageID: output.MessageID(),
-						OutputID:  output.OutputID(),
-						Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-						Deposit:   output.Deposit(),
+						BlockID:  output.BlockID(),
+						OutputID: output.OutputID(),
+						Address:  output.Output().UnlockConditionsSet().Address().Address,
+						Deposit:  output.Deposit(),
 					})
 				}
 
@@ -198,10 +197,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 						continue
 					}
 					consumed = append(consumed, &participation.ParticipationOutput{
-						MessageID: spent.MessageID(),
-						OutputID:  spent.OutputID(),
-						Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
-						Deposit:   spent.Deposit(),
+						BlockID:  spent.BlockID(),
+						OutputID: spent.OutputID(),
+						Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+						Deposit:  spent.Deposit(),
 					})
 				}
 
@@ -226,10 +225,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					continue
 				}
 				created = append(created, &participation.ParticipationOutput{
-					MessageID: output.MessageID(),
-					OutputID:  output.OutputID(),
-					Address:   output.Output().UnlockConditions().MustSet().Address().Address,
-					Deposit:   output.Deposit(),
+					BlockID:  output.BlockID(),
+					OutputID: output.OutputID(),
+					Address:  output.Output().UnlockConditionsSet().Address().Address,
+					Deposit:  output.Deposit(),
 				})
 			}
 
@@ -239,10 +238,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					continue
 				}
 				consumed = append(consumed, &participation.ParticipationOutput{
-					MessageID: spent.MessageID(),
-					OutputID:  spent.OutputID(),
-					Address:   spent.Output().Output().UnlockConditions().MustSet().Address().Address,
-					Deposit:   spent.Deposit(),
+					BlockID:  spent.BlockID(),
+					OutputID: spent.OutputID(),
+					Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+					Deposit:  spent.Deposit(),
 				})
 			}
 
@@ -275,7 +274,7 @@ func (env *ParticipationTestEnv) ConfirmedMilestoneIndex() milestone.Index {
 	return env.te.SyncManager().ConfirmedMilestoneIndex()
 }
 
-func (env *ParticipationTestEnv) LastMilestoneParents() hornet.MessageIDs {
+func (env *ParticipationTestEnv) LastMilestoneParents() iotago.BlockIDs {
 	return env.te.LastMilestoneParents()
 }
 
@@ -339,16 +338,16 @@ func (env *ParticipationTestEnv) SendParticipations(wallet *utils.HDWallet, amou
 	return env.NewParticipationHelper(wallet).Amount(amount).AddParticipations(participations).Send()
 }
 
-func (env *ParticipationTestEnv) CancelParticipations(wallet *utils.HDWallet) *testsuite.Message {
+func (env *ParticipationTestEnv) CancelParticipations(wallet *utils.HDWallet) *testsuite.Block {
 	return env.Transfer(wallet, wallet, wallet.Balance())
 }
 
-func (env *ParticipationTestEnv) NewMessageBuilder(optionalTag ...string) *testsuite.MessageBuilder {
-	return env.te.NewMessageBuilder(optionalTag...)
+func (env *ParticipationTestEnv) NewBlockBuilder(optionalTag ...string) *testsuite.BlockBuilder {
+	return env.te.NewBlockBuilder(optionalTag...)
 }
 
-func (env *ParticipationTestEnv) Transfer(fromWallet *utils.HDWallet, toWallet *utils.HDWallet, amount uint64) *testsuite.Message {
-	return env.te.NewMessageBuilder("Not a vote").
+func (env *ParticipationTestEnv) Transfer(fromWallet *utils.HDWallet, toWallet *utils.HDWallet, amount uint64) *testsuite.Block {
+	return env.te.NewBlockBuilder("Not a vote").
 		LatestMilestoneAsParents().
 		FromWallet(fromWallet).
 		ToWallet(toWallet).
@@ -370,13 +369,13 @@ func (env *ParticipationTestEnv) IssueDefaultBallotVoteAndMilestone(eventID part
 		AddDefaultBallotVote(eventID).
 		Send()
 
-	_, confStats := env.IssueMilestone(castVote.Message().StoredMessageID())
-	require.Equal(env.t, 1+1, confStats.MessagesReferenced) // 1 + milestone itself
+	_, confStats := env.IssueMilestone(castVote.Block().StoredBlockID())
+	require.Equal(env.t, 1+1, confStats.BlocksReferenced) // 1 + milestone itself
 
 	return castVote
 }
 
-func (env *ParticipationTestEnv) IssueMilestone(onTips ...hornet.MessageID) (*whiteflag.Confirmation, *whiteflag.ConfirmedMilestoneStats) {
+func (env *ParticipationTestEnv) IssueMilestone(onTips ...iotago.BlockID) (*whiteflag.Confirmation, *whiteflag.ConfirmedMilestoneStats) {
 	return env.te.IssueAndConfirmMilestoneOnTips(onTips, false)
 }
 
@@ -453,17 +452,17 @@ func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participatio
 }
 
 func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participation.EventID, sentParticipations *SentParticipations, startMilestoneIndex milestone.Index, endMilestoneIndex milestone.Index, amount uint64) {
-	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Block().GeneratedUTXO().OutputID())
 	require.NoError(env.t, err)
-	require.Equal(env.t, sentParticipations.Message().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
-	require.Equal(env.t, sentParticipations.Message().StoredMessageID(), trackedParticipation.MessageID)
+	require.Equal(env.t, sentParticipations.Block().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
+	require.Equal(env.t, sentParticipations.Block().StoredBlockID(), trackedParticipation.BlockID)
 	require.Equal(env.t, amount, trackedParticipation.Amount)
 	require.Equal(env.t, startMilestoneIndex, trackedParticipation.StartIndex)
 	require.Equal(env.t, endMilestoneIndex, trackedParticipation.EndIndex)
 }
 
 func (env *ParticipationTestEnv) AssertInvalidParticipation(eventID participation.EventID, sentParticipations *SentParticipations) {
-	_, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Message().GeneratedUTXO().OutputID())
+	_, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Block().GeneratedUTXO().OutputID())
 	require.Error(env.t, err)
 	require.ErrorIs(env.t, err, participation.ErrUnknownParticipation)
 }
@@ -483,10 +482,10 @@ func (env *ParticipationTestEnv) AssertWalletBalance(wallet *utils.HDWallet, exp
 	env.te.AssertWalletBalance(wallet, expectedBalance)
 }
 
-func ParticipationMessageFromMessage(msg *storage.Message) *participation.ParticipationMessage {
-	return &participation.ParticipationMessage{
-		MessageID: msg.MessageID(),
-		Message:   msg.Message(),
-		Data:      msg.Data(),
+func ParticipationBlockFromBlock(msg *storage.Block) *participation.ParticipationBlock {
+	return &participation.ParticipationBlock{
+		BlockID: msg.BlockID(),
+		Block:   msg.Block(),
+		Data:    msg.Data(),
 	}
 }

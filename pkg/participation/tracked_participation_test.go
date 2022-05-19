@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/hornet"
 	"github.com/gohornet/hornet/pkg/model/milestone"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/marshalutil"
@@ -15,8 +14,14 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
-func RandOutputID() *iotago.OutputID {
-	outputID := &iotago.OutputID{}
+func RandBlockID() iotago.BlockID {
+	blockID := iotago.BlockID{}
+	copy(blockID[:], testutil.RandBytes(iotago.BlockIDLength))
+	return blockID
+}
+
+func RandOutputID() iotago.OutputID {
+	outputID := iotago.OutputID{}
 	copy(outputID[:], testutil.RandBytes(iotago.OutputIDLength))
 	return outputID
 }
@@ -26,7 +31,7 @@ func RandomTrackedParticipation() *participation.TrackedParticipation {
 	return &participation.TrackedParticipation{
 		EventID:    RandEventID(),
 		OutputID:   RandOutputID(),
-		MessageID:  hornet.MessageIDFromSlice(testutil.RandBytes(iotago.MessageIDLength)),
+		BlockID:    RandBlockID(),
 		Amount:     uint64(rand.Int63()),
 		StartIndex: msIndex,
 		EndIndex:   msIndex + 10,
@@ -37,9 +42,9 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 	p := RandomTrackedParticipation()
 
 	ms := marshalutil.New(p.ValueBytes())
-	msgID, err := ms.ReadBytes(iotago.MessageIDLength)
+	blockID, err := ms.ReadBytes(iotago.BlockIDLength)
 	require.NoError(t, err)
-	require.True(t, bytes.Equal(p.MessageID, msgID))
+	require.True(t, bytes.Equal(p.BlockID[:], blockID))
 
 	amount, err := ms.ReadUint64()
 	require.NoError(t, err)
@@ -59,7 +64,7 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 func TestTrackedParticipation_Deserialization(t *testing.T) {
 	eventID := RandEventID()
 	outputID := RandOutputID()
-	messageID := hornet.MessageIDFromSlice(testutil.RandBytes(iotago.MessageIDLength))
+	blockID := RandBlockID()
 	amount := uint64(rand.Int63())
 	startIndex := milestone.Index(rand.Int31())
 	endIndex := startIndex + 25
@@ -73,7 +78,7 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	require.Equal(t, 67, len(key))
 
 	ms = marshalutil.New(48)
-	ms.WriteBytes(messageID)
+	ms.WriteBytes(blockID[:])
 	ms.WriteUint64(amount)
 	ms.WriteUint32(uint32(startIndex))
 	ms.WriteUint32(uint32(endIndex))
@@ -84,9 +89,9 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	p, err := participation.TrackedParticipationFromBytes(key, value)
 	require.NoError(t, err)
 
-	require.True(t, bytes.Equal(eventID[:], p.EventID[:]))
-	require.True(t, bytes.Equal(outputID[:], p.OutputID[:]))
-	require.True(t, bytes.Equal(messageID, p.MessageID))
+	require.Equal(t, eventID[:], p.EventID[:])
+	require.Equal(t, outputID[:], p.OutputID[:])
+	require.Equal(t, blockID, p.BlockID)
 	require.Exactly(t, amount, p.Amount)
 	require.Exactly(t, startIndex, p.StartIndex)
 	require.Exactly(t, endIndex, p.EndIndex)

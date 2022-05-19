@@ -1,23 +1,19 @@
 package participation
 
 import (
-	flag "github.com/spf13/pflag"
-
 	"github.com/iotaledger/hive.go/app"
 )
 
-const (
-	// CfgParticipationDatabasePath the path to the database folder.
-	CfgParticipationDatabasePath = "participation.databasePath"
+type ParametersParticipation struct {
+	DatabasePath string `default:"database" usage:"the path to the database folder"`
+	BindAddress  string `default:"localhost:9892" usage:"bind address on which the Participation HTTP server listens"`
+}
 
-	// CfgParticipationBindAddress bind address on which the Participation HTTP server listens.
-	CfgParticipationBindAddress = "participation.bindAddress"
-)
+var ParamsParticipation = &ParametersParticipation{}
 
 var params = &app.ComponentParams{
-	Params: func(fs *flag.FlagSet) {
-		fs.String(CfgParticipationDatabasePath, "database", "the path to the database folder")
-		fs.String(CfgParticipationBindAddress, "localhost:9892", "bind address on which the Participation HTTP server listens")
+	Params: map[string]any{
+		"participation": ParamsParticipation,
 	},
 	Masked: nil,
 }
