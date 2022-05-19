@@ -53,7 +53,12 @@ func provide(c *dig.Container) error {
 
 	return c.Provide(func(deps participationDeps) *participation.ParticipationManager {
 
-		participationStore, err := database.StoreWithDefaultSettings(ParamsParticipation.DatabasePath, true, database.EngineRocksDB)
+		dbEngine, err := database.DatabaseEngineFromStringAllowed(ParamsParticipation.Database.Engine)
+		if err != nil {
+			CoreComponent.LogPanic(err)
+		}
+
+		participationStore, err := database.StoreWithDefaultSettings(ParamsParticipation.Database.Path, true, dbEngine)
 		if err != nil {
 			CoreComponent.LogPanic(err)
 		}
@@ -72,13 +77,6 @@ func provide(c *dig.Container) error {
 		CoreComponent.LogInfof("Initialized ParticipationManager at milestone %d", pm.LedgerIndex())
 		return pm
 	})
-}
-
-func newEcho() *echo.Echo {
-	e := echo.New()
-	e.HideBanner = true
-	e.Use(middleware.Recover())
-	return e
 }
 
 func configure() error {
@@ -128,12 +126,12 @@ func run() error {
 		go func() {
 			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsParticipation.BindAddress)
 			if err := e.Start(ParamsParticipation.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				CoreComponent.LogWarnf("Stopped REST-API server due to an error (%s)", err)
+				CoreComponent.LogPanicf("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
 		if err := deps.NodeBridge.RegisterAPIRoute(APIRoute, ParamsParticipation.BindAddress); err != nil {
-			CoreComponent.LogWarnf("Error registering INX api route (%s)", err)
+			CoreComponent.LogPanicf("Error registering INX api route (%s)", err)
 		}
 
 		<-ctx.Done()
@@ -154,4 +152,11 @@ func run() error {
 	}
 
 	return nil
+}
+
+func newEcho() *echo.Echo {
+	e := echo.New()
+	e.HideBanner = true
+	e.Use(middleware.Recover())
+	return e
 }
