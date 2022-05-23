@@ -159,11 +159,11 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 			return &participation.ParticipationOutput{
 				BlockID:  output.BlockID(),
 				OutputID: outputID,
-				Address:  output.Output().UnlockConditionsSet().Address().Address,
+				Address:  output.Output().UnlockConditionSet().Address().Address,
 				Deposit:  output.Deposit(),
 			}, nil
 		},
-		func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) bool) error {
+		func(ctx context.Context, startIndex milestone.Index, endIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
 			te.UTXOManager().ReadLockLedger()
 			defer te.UTXOManager().ReadUnlockLedger()
 
@@ -186,7 +186,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					created = append(created, &participation.ParticipationOutput{
 						BlockID:  output.BlockID(),
 						OutputID: output.OutputID(),
-						Address:  output.Output().UnlockConditionsSet().Address().Address,
+						Address:  output.Output().UnlockConditionSet().Address().Address,
 						Deposit:  output.Deposit(),
 					})
 				}
@@ -199,17 +199,23 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 					consumed = append(consumed, &participation.ParticipationOutput{
 						BlockID:  spent.BlockID(),
 						OutputID: spent.OutputID(),
-						Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+						Address:  spent.Output().Output().UnlockConditionSet().Address().Address,
 						Deposit:  spent.Deposit(),
 					})
 				}
 
-				if !handler(msDiff.Index, created, consumed) {
-					return nil
+				err = handler(msDiff.Index, created, consumed)
+				if err != nil {
+					return err
+				}
+
+				if currentIndex >= endIndex {
+					break
 				}
 
 				currentIndex++
 			}
+			return nil
 		},
 		participation.WithTagMessage(ParticipationTag),
 	)
@@ -227,7 +233,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				created = append(created, &participation.ParticipationOutput{
 					BlockID:  output.BlockID(),
 					OutputID: output.OutputID(),
-					Address:  output.Output().UnlockConditionsSet().Address().Address,
+					Address:  output.Output().UnlockConditionSet().Address().Address,
 					Deposit:  output.Deposit(),
 				})
 			}
@@ -240,7 +246,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				consumed = append(consumed, &participation.ParticipationOutput{
 					BlockID:  spent.BlockID(),
 					OutputID: spent.OutputID(),
-					Address:  spent.Output().Output().UnlockConditionsSet().Address().Address,
+					Address:  spent.Output().Output().UnlockConditionSet().Address().Address,
 					Deposit:  spent.Deposit(),
 				})
 			}

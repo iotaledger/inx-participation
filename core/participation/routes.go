@@ -28,10 +28,10 @@ const (
 	RouteOutputStatus = "/outputs/:" + restapipkg.ParameterOutputID
 
 	// RouteAddressBech32Status is the route to get the staking rewards for the given bech32 address.
-	RouteAddressBech32Status = "/addresses/:" + restapipkg.ParameterAddress
+	RouteAddressBech32Status = "/addresses/:" + ParameterAddress
 
 	// RouteAddressBech32Outputs is the route to get the outputs for the given bech32 address.
-	RouteAddressBech32Outputs = "/addresses/:" + restapipkg.ParameterAddress + "/outputs"
+	RouteAddressBech32Outputs = "/addresses/:" + ParameterAddress + "/outputs"
 
 	// RouteAdminCreateEvent is the route the node operator can use to add events.
 	// POST creates a new event to track
@@ -55,6 +55,9 @@ const (
 
 	// ParameterParticipationEventID is used to identify an event by its ID.
 	ParameterParticipationEventID = "eventID"
+
+	// ParameterAddress is used to identify an address.
+	ParameterAddress = "address"
 )
 
 func setupRoutes(e *echo.Echo) {
