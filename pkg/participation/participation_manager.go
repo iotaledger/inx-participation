@@ -27,7 +27,7 @@ type ProtocolParametersProvider func() *iotago.ProtocolParameters
 type NodeStatusProvider func() (confirmedIndex milestone.Index, pruningIndex milestone.Index)
 type BlockForBlockIDProvider func(blockID iotago.BlockID) (*ParticipationBlock, error)
 type OutputForOutputIDProvider func(outputID iotago.OutputID) (*ParticipationOutput, error)
-type LedgerUpdatesProvider func(ctx context.Context, startIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool) error
+type LedgerUpdatesProvider func(ctx context.Context, startIndex milestone.Index, endIndex milestone.Index, handler func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) error) error
 
 // ParticipationManager is used to track the outcome of participation in the tangle.
 type ParticipationManager struct {
@@ -343,36 +343,29 @@ func (pm *ParticipationManager) calculatePastParticipationForEvent(event *Event)
 		return err
 	}
 
-	var innerErr error
-	err = pm.ledgerUpdatesFunc(context.Background(), event.CommenceMilestoneIndex(), func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) bool {
+	endIndex := event.EndMilestoneIndex()
+	if ledgerIndex < endIndex {
+		endIndex = ledgerIndex
+	}
+
+	err = pm.ledgerUpdatesFunc(context.Background(), event.CommenceMilestoneIndex(), endIndex, func(index milestone.Index, created []*ParticipationOutput, consumed []*ParticipationOutput) error {
 		for _, output := range created {
 			if err := pm.applyNewUTXOForEvents(index, output, events); err != nil {
-				innerErr = err
-				return false
+				return err
 			}
 		}
 
 		for _, spent := range consumed {
 			if err := pm.applySpentUTXOForEvents(index, spent, events); err != nil {
-				innerErr = err
-				return false
+				return err
 			}
 		}
 
 		if err := pm.applyNewConfirmedMilestoneIndexForEvents(index, events); err != nil {
-			innerErr = err
-			return false
+			return err
 		}
-
-		if index >= ledgerIndex || index >= event.EndMilestoneIndex() {
-			// We are done filling up to the known ledgerIndex or the event ended
-			return false
-		}
-		return true
+		return nil
 	})
-	if innerErr != nil {
-		return innerErr
-	}
 	if err != nil {
 		return err
 	}
@@ -746,7 +739,7 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 }
 
 func serializedAddressFromOutput(output *iotago.BasicOutput) ([]byte, error) {
-	outputAddress, err := output.UnlockConditionsSet().Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
+	outputAddress, err := output.UnlockConditionSet().Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -841,7 +834,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 	return &ParticipationOutput{
 		BlockID:  msg.BlockID,
 		OutputID: outputID,
-		Address:  depositOutput.UnlockConditionsSet().Address().Address,
+		Address:  depositOutput.UnlockConditionSet().Address().Address,
 		Deposit:  depositOutput.Deposit(),
 	}, participations, nil
 }

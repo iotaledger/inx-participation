@@ -214,8 +214,23 @@ func getOutputStatus(c echo.Context) (*OutputStatusResponse, error) {
 	return response, nil
 }
 
+func ParseBech32AddressParam(c echo.Context, prefix iotago.NetworkPrefix) (iotago.Address, error) {
+	addressParam := strings.ToLower(c.Param(ParameterAddress))
+
+	hrp, bech32Address, err := iotago.ParseBech32(addressParam)
+	if err != nil {
+		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid address: %s, error: %s", addressParam, err)
+	}
+
+	if hrp != prefix {
+		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid bech32 address, expected prefix: %s", prefix)
+	}
+
+	return bech32Address, nil
+}
+
 func getRewardsByAddress(c echo.Context) (*participation.AddressRewards, error) {
-	bech32Address, err := restapi.ParseBech32AddressParam(c, deps.NodeBridge.ProtocolParameters().Bech32HRP)
+	bech32Address, err := ParseBech32AddressParam(c, deps.NodeBridge.ProtocolParameters().Bech32HRP)
 	if err != nil {
 		return nil, err
 	}
@@ -246,7 +261,7 @@ func getRewards(c echo.Context) (*participation.EventRewards, error) {
 }
 
 func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
-	bech32Address, err := restapi.ParseBech32AddressParam(c, deps.NodeBridge.ProtocolParameters().Bech32HRP)
+	bech32Address, err := ParseBech32AddressParam(c, deps.NodeBridge.ProtocolParameters().Bech32HRP)
 	if err != nil {
 		return nil, err
 	}

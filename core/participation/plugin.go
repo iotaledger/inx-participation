@@ -12,8 +12,8 @@ import (
 
 	"github.com/gohornet/hornet/pkg/database"
 	"github.com/gohornet/hornet/pkg/model/milestone"
+	"github.com/gohornet/inx-app/nodebridge"
 	"github.com/gohornet/inx-participation/pkg/daemon"
-	"github.com/gohornet/inx-participation/pkg/nodebridge"
 	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/core/shutdown"
@@ -66,10 +66,10 @@ func provide(c *dig.Container) error {
 		pm, err := participation.NewManager(
 			participationStore,
 			deps.NodeBridge.ProtocolParameters,
-			deps.NodeBridge.NodeStatus,
-			deps.NodeBridge.BlockForBlockID,
-			deps.NodeBridge.OutputForOutputID,
-			deps.NodeBridge.LedgerUpdates,
+			NodeStatus,
+			BlockForBlockID,
+			OutputForOutputID,
+			LedgerUpdates,
 		)
 		if err != nil {
 			CoreComponent.LogPanic(err)
@@ -100,13 +100,19 @@ func run() error {
 	if err := CoreComponent.Daemon().BackgroundWorker("LedgerUpdates", func(ctx context.Context) {
 		CoreComponent.LogInfo("Starting LedgerUpdates ... done")
 
-		if err := deps.NodeBridge.LedgerUpdates(ctx, deps.ParticipationManager.LedgerIndex()+1, func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) bool {
+		startIndex := deps.ParticipationManager.LedgerIndex()
+		if startIndex > 0 {
+			startIndex = startIndex + 1
+		}
+
+		if err := LedgerUpdates(ctx, startIndex, 0, func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
 			timeStart := time.Now()
 			if err := deps.ParticipationManager.ApplyNewLedgerUpdate(index, created, consumed); err != nil {
 				CoreComponent.LogPanicf("ApplyNewLedgerUpdate failed: %s", err)
+				return err
 			}
 			CoreComponent.LogInfof("Applying milestone %d with %d new and %d outputs took %s", index, len(created), len(consumed), time.Since(timeStart).Truncate(time.Millisecond))
-			return true
+			return nil
 		}); err != nil {
 			CoreComponent.LogWarnf("Listening to LedgerUpdates failed: %s", err)
 			deps.ShutdownHandler.SelfShutdown("disconnected from INX", false)
