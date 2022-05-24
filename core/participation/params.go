@@ -10,7 +10,7 @@ type ParametersParticipation struct {
 		Engine string `default:"rocksdb" usage:"the used database engine (pebble/rocksdb/mapdb)"`
 		// Path defines the path to the database folder.
 		Path string `default:"database" usage:"the path to the database folder"`
-	}
+	} `name:"db"`
 	BindAddress string `default:"localhost:9892" usage:"bind address on which the Participation HTTP server listens"`
 }
 

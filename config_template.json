@@ -9,7 +9,7 @@
     "address": "localhost:9029"
   },
   "participation": {
-    "database": {
+    "db": {
       "engine": "rocksdb",
       "path": "database"
     },
