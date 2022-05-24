@@ -180,6 +180,7 @@ github.com/coreos/etcd v3.3.10+incompatible/go.mod h1:uF7uidLiAD3TWHmW31ZFd/JWoc
 github.com/coreos/go-etcd v2.0.0+incompatible/go.mod h1:Jez6KQU2B/sWsbdaef3ED8NzMklzPG4d5KIOhIy30Tk=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
 github.com/coreos/go-semver v0.3.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
+github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d h1:t5Wuyh53qYyg9eqn4BbnlIT+vmhyww0TatL+zT3uWgI=
 github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd/v22 v22.3.2 h1:D9/bQk5vlXQFZ6Kwuu6zaiXJ9oTPe68++AzAJc1DzSI=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
@@ -474,8 +475,8 @@ github.com/influxdata/tdigest v0.0.0-20181121200506-bf2b5ad3c0a9/go.mod h1:Js0mq
 github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368/go.mod h1:Wbbw6tYNvwa5dlB6304Sd+82Z3f7PmVZHVKU637d4po=
 github.com/iotaledger/go-ds-kvstore v0.0.0-20220404122649-445475b91fcf h1:3LoDur2QvBLbyXrGubX6HmoP6x5pVn1KkheFonTa6Is=
 github.com/iotaledger/go-ds-kvstore v0.0.0-20220404122649-445475b91fcf/go.mod h1:KMsgDNZKM3kkaIAoIk/FZ6A1vfVPix91lx2dm3dA6g8=
-github.com/iotaledger/hive.go v0.0.0-20220516114042-6c0ad76bc65f h1:1AdTCZ+xNl96EQHnlOv5HAhybdFHea2ZB1gGlqw23wQ=
-github.com/iotaledger/hive.go v0.0.0-20220516114042-6c0ad76bc65f/go.mod h1:qY0Eg2w/r+Ot0KrocMQHrtHzrcYKxDAEf33c6nSd8mI=
+github.com/iotaledger/hive.go v0.0.0-20220524135608-2380525b3c21 h1:2h0FHkFPatlRwH0jH0NyTp7V9PjIBXN7UTxkLbkQ38c=
+github.com/iotaledger/hive.go v0.0.0-20220524135608-2380525b3c21/go.mod h1:qY0Eg2w/r+Ot0KrocMQHrtHzrcYKxDAEf33c6nSd8mI=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220516114042-6c0ad76bc65f h1:vOxGzk44OWH8WaCnkYUbHsKBYsbeIVpmtLFC0ZWYddo=
 github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220516114042-6c0ad76bc65f/go.mod h1:O18k+0+qtbHfk8AYI+dgMOoDBDKy9vwXk2ocyD7MyRI=
 github.com/iotaledger/inx/go v0.0.0-20220523105438-4e34054d0c13 h1:uRiaouqHdBKv5+M7SPV0ErxhGSv0XmKMg/0E3hJlyEA=

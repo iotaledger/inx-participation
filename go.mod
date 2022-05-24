@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/gohornet/hornet v1.1.0-rc1.0.20220522133459-087a2579df25
 	github.com/gohornet/inx-app v0.0.0-20220523105415-e67f5a5b4f91
-	github.com/iotaledger/hive.go v0.0.0-20220516114042-6c0ad76bc65f
+	github.com/iotaledger/hive.go v0.0.0-20220524135608-2380525b3c21
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220516114042-6c0ad76bc65f
 	github.com/iotaledger/inx/go v0.0.0-20220523105438-4e34054d0c13
 	github.com/iotaledger/iota.go/v3 v3.0.0-20220519135423-82921868d5cd
