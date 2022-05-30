@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gohornet/inx-participation/core/app"
+	"github.com/iotaledger/inx-participation/core/app"
 )
 
 func main() {

@@ -9,15 +9,15 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/hornet/pkg/model/storage"
-	"github.com/gohornet/hornet/pkg/model/utxo"
-	"github.com/gohornet/hornet/pkg/testsuite"
-	"github.com/gohornet/hornet/pkg/testsuite/utils"
-	"github.com/gohornet/hornet/pkg/whiteflag"
-	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
+	"github.com/iotaledger/hornet/pkg/model/milestone"
+	"github.com/iotaledger/hornet/pkg/model/storage"
+	"github.com/iotaledger/hornet/pkg/model/utxo"
+	"github.com/iotaledger/hornet/pkg/testsuite"
+	"github.com/iotaledger/hornet/pkg/testsuite/utils"
+	"github.com/iotaledger/hornet/pkg/whiteflag"
+	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -61,7 +61,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 	genesisAddress := genesisWallet.Address()
 
-	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, BelowMaxDepth, MinPoWScore, false)
+	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, uint8(BelowMaxDepth), uint32(MinPoWScore), false)
 
 	//Add token supply to our local HDWallet
 	genesisWallet.BookOutput(te.GenesisOutput)
