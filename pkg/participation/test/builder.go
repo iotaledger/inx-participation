@@ -3,10 +3,10 @@ package test
 import (
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/utxo"
-	"github.com/gohornet/hornet/pkg/testsuite"
-	"github.com/gohornet/hornet/pkg/testsuite/utils"
-	"github.com/gohornet/inx-participation/pkg/participation"
+	"github.com/iotaledger/hornet/pkg/model/utxo"
+	"github.com/iotaledger/hornet/pkg/testsuite"
+	"github.com/iotaledger/hornet/pkg/testsuite/utils"
+	"github.com/iotaledger/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )

@@ -10,13 +10,13 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/dig"
 
-	"github.com/gohornet/hornet/pkg/database"
-	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/inx-app/nodebridge"
-	"github.com/gohornet/inx-participation/pkg/daemon"
-	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/core/shutdown"
+	"github.com/iotaledger/hornet/pkg/database"
+	"github.com/iotaledger/hornet/pkg/model/milestone"
+	"github.com/iotaledger/inx-app/nodebridge"
+	"github.com/iotaledger/inx-participation/pkg/daemon"
+	"github.com/iotaledger/inx-participation/pkg/participation"
 )
 
 func init() {

@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/inx-participation/pkg/participation"
 )
 
 func RandValidStaking() (*participation.Staking, []byte) {

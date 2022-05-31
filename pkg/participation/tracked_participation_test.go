@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/gohornet/hornet/pkg/model/milestone"
-	"github.com/gohornet/inx-participation/pkg/participation"
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/testutil"
+	"github.com/iotaledger/hornet/pkg/model/milestone"
+	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
