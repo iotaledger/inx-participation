@@ -217,14 +217,14 @@ func TestTaggedDataPayloads(t *testing.T) {
 		Tag:  []byte(test.ParticipationTag),
 		Data: participationsData,
 	})
-	txBuilder.AddInput(&builder.ToBeSignedUTXOInput{Address: env.Wallet3.Address(), OutputID: env.Wallet3.Outputs()[0].OutputID(), Output: env.Wallet3.Outputs()[0].Output()})
-	txBuilder.AddInput(&builder.ToBeSignedUTXOInput{Address: env.Wallet4.Address(), OutputID: env.Wallet4.Outputs()[0].OutputID(), Output: env.Wallet4.Outputs()[0].Output()})
+	txBuilder.AddInput(&builder.TxInput{UnlockTarget: env.Wallet3.Address(), InputID: env.Wallet3.Outputs()[0].OutputID(), Input: env.Wallet3.Outputs()[0].Output()})
+	txBuilder.AddInput(&builder.TxInput{UnlockTarget: env.Wallet4.Address(), InputID: env.Wallet4.Outputs()[0].OutputID(), Input: env.Wallet4.Outputs()[0].Output()})
 	txBuilder.AddOutput(&iotago.BasicOutput{Conditions: iotago.UnlockConditions{&iotago.AddressUnlockCondition{Address: env.Wallet4.Address()}}, Amount: env.Wallet3.Balance() + env.Wallet4.Balance()})
 	wallet3PrivKey, _ := env.Wallet3.KeyPair()
 	wallet4PrivKey, _ := env.Wallet4.KeyPair()
 	inputAddrSigner := iotago.NewInMemoryAddressSigner(iotago.AddressKeys{Address: env.Wallet3.Address(), Keys: wallet3PrivKey}, iotago.AddressKeys{Address: env.Wallet4.Address(), Keys: wallet4PrivKey})
 	blockBuilder := txBuilder.BuildAndSwapToBlockBuilder(env.ProtocolParameters(), inputAddrSigner, nil)
-	blockBuilder.ParentsBlockIDs(env.LastMilestoneParents())
+	blockBuilder.Parents(env.LastMilestoneParents())
 
 	msg, err := blockBuilder.Build()
 	require.NoError(t, err)
