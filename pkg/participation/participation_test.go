@@ -8,7 +8,7 @@ import (
 
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/utxo/utils"
+	"github.com/iotaledger/hornet/pkg/tpkg"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 )
 
@@ -17,7 +17,7 @@ func RandParticipation(answerCount int) (*participation.Participation, []byte) {
 }
 
 func RandParticipationWithEventID(eventID participation.EventID, answerCount int) (*participation.Participation, []byte) {
-	answers := utils.RandBytes(answerCount)
+	answers := tpkg.RandBytes(answerCount)
 
 	p := &participation.Participation{
 		EventID: eventID,

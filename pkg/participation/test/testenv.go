@@ -11,7 +11,6 @@ import (
 
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hornet/pkg/model/storage"
 	"github.com/iotaledger/hornet/pkg/model/utxo"
 	"github.com/iotaledger/hornet/pkg/testsuite"
@@ -26,15 +25,18 @@ const (
 	defaultBallotAnswerValue uint8 = 10
 )
 
+const (
+	ProtocolVersion = 2
+	BelowMaxDepth   = 15
+	MinPoWScore     = 1.0
+)
+
 var (
 	genesisSeed, _ = hex.DecodeString("2f54b071657e6644629a40518ba6554de4eee89f0757713005ad26137d80968d05e1ca1bca555d8b4b85a3f4fcf11a6a48d3d628d1ace40f48009704472fc8f9")
 	seed1, _       = hex.DecodeString("96d9ff7a79e4b0a5f3e5848ae7867064402da92a62eabb4ebbe463f12d1f3b1aace1775488f51cb1e3a80732a03ef60b111d6833ab605aa9f8faebeb33bbe3d9")
 	seed2, _       = hex.DecodeString("b15209ddc93cbdb600137ea6a8f88cdd7c5d480d5815c9352a0fb5c4e4b86f7151dcb44c2ba635657a2df5a8fd48cb9bab674a9eceea527dbbb254ef8c9f9cd7")
 	seed3, _       = hex.DecodeString("d5353ceeed380ab89a0f6abe4630c2091acc82617c0edd4ff10bd60bba89e2ed30805ef095b989c2bf208a474f8748d11d954aade374380422d4d812b6f1da90")
 	seed4, _       = hex.DecodeString("bd6fe09d8a309ca309c5db7b63513240490109cd0ac6b123551e9da0d5c8916c4a5a4f817e4b4e9df89885ce1af0986da9f1e56b65153c2af1e87ab3b11dabb4")
-
-	MinPoWScore   = 100.0
-	BelowMaxDepth = uint16(15)
 )
 
 type ParticipationTestEnv struct {
@@ -61,7 +63,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 	genesisAddress := genesisWallet.Address()
 
-	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, uint8(BelowMaxDepth), uint32(MinPoWScore), false)
+	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, ProtocolVersion, BelowMaxDepth, MinPoWScore, false)
 
 	//Add token supply to our local HDWallet
 	genesisWallet.BookOutput(te.GenesisOutput)
@@ -73,9 +75,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	messageA := te.NewBlockBuilder("A").
 		Parents(te.LastMilestoneParents()).
 		FromWallet(genesisWallet).
-		ToWallet(seed1Wallet).
 		Amount(wallet1Balance).
-		Build().
+		BuildTransactionToWallet(seed1Wallet).
 		Store().
 		BookOnWallets()
 
@@ -83,9 +84,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	messageB := te.NewBlockBuilder("B").
 		Parents(append(te.LastMilestoneParents(), messageA.StoredBlockID())).
 		FromWallet(genesisWallet).
-		ToWallet(seed2Wallet).
 		Amount(wallet2Balance).
-		Build().
+		BuildTransactionToWallet(seed2Wallet).
 		Store().
 		BookOnWallets()
 
@@ -93,9 +93,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	messageC := te.NewBlockBuilder("C").
 		Parents(append(te.LastMilestoneParents(), messageB.StoredBlockID())).
 		FromWallet(genesisWallet).
-		ToWallet(seed3Wallet).
 		Amount(wallet3Balance).
-		Build().
+		BuildTransactionToWallet(seed3Wallet).
 		Store().
 		BookOnWallets()
 
@@ -103,9 +102,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	messageD := te.NewBlockBuilder("D").
 		Parents(append(te.LastMilestoneParents(), messageC.StoredBlockID())).
 		FromWallet(genesisWallet).
-		ToWallet(seed4Wallet).
 		Amount(wallet4Balance).
-		Build().
+		BuildTransactionToWallet(seed4Wallet).
 		Store().
 		BookOnWallets()
 
@@ -133,7 +131,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func() *iotago.ProtocolParameters {
 			return te.ProtocolParameters()
 		},
-		func() (confirmedIndex milestone.Index, pruningIndex milestone.Index) {
+		func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
 		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
@@ -163,7 +161,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				Deposit:  output.Deposit(),
 			}, nil
 		},
-		func(ctx context.Context, startIndex milestone.Index, endIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
+		func(ctx context.Context, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex, handler func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
 			te.UTXOManager().ReadLockLedger()
 			defer te.UTXOManager().ReadUnlockLedger()
 
@@ -223,7 +221,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 	// Connect the callbacks from the testsuite to the ParticipationManager
 	te.ConfigureUTXOCallbacks(
-		func(index milestone.Index, newOutputs utxo.Outputs, newSpents utxo.Spents) {
+		func(index iotago.MilestoneIndex, newOutputs utxo.Outputs, newSpents utxo.Spents) {
 
 			var created []*participation.ParticipationOutput
 			for _, output := range newOutputs {
@@ -276,7 +274,7 @@ func (env *ParticipationTestEnv) ParticipationManager() *participation.Participa
 	return env.rm
 }
 
-func (env *ParticipationTestEnv) ConfirmedMilestoneIndex() milestone.Index {
+func (env *ParticipationTestEnv) ConfirmedMilestoneIndex() iotago.MilestoneIndex {
 	return env.te.SyncManager().ConfirmedMilestoneIndex()
 }
 
@@ -289,11 +287,11 @@ func (env *ParticipationTestEnv) Cleanup() {
 	env.te.CleanupTestEnvironment(true)
 }
 
-func (env *ParticipationTestEnv) DefaultEvent(commenceMilestoneIndex milestone.Index, startPhaseDuration uint32, holdingDuration uint32) *participation.Event {
+func (env *ParticipationTestEnv) DefaultEvent(commenceMilestoneIndex iotago.MilestoneIndex, startPhaseDuration uint32, holdingDuration uint32) *participation.Event {
 
 	eventCommenceIndex := commenceMilestoneIndex
-	eventStartIndex := eventCommenceIndex + milestone.Index(startPhaseDuration)
-	eventEndIndex := eventStartIndex + milestone.Index(holdingDuration)
+	eventStartIndex := eventCommenceIndex + iotago.MilestoneIndex(startPhaseDuration)
+	eventEndIndex := eventStartIndex + iotago.MilestoneIndex(holdingDuration)
 
 	eventBuilder := participation.NewEventBuilder("All 4 HORNET", eventCommenceIndex, eventStartIndex, eventEndIndex, "The biggest governance decision in the history of IOTA")
 
@@ -327,7 +325,7 @@ func (env *ParticipationTestEnv) DefaultEvent(commenceMilestoneIndex milestone.I
 	return event
 }
 
-func (env *ParticipationTestEnv) StoreDefaultEvent(commenceMilestoneIndex milestone.Index, startPhaseDuration uint32, holdingDuration uint32) participation.EventID {
+func (env *ParticipationTestEnv) StoreDefaultEvent(commenceMilestoneIndex iotago.MilestoneIndex, startPhaseDuration uint32, holdingDuration uint32) participation.EventID {
 
 	event := env.DefaultEvent(commenceMilestoneIndex, startPhaseDuration, holdingDuration)
 
@@ -356,9 +354,8 @@ func (env *ParticipationTestEnv) Transfer(fromWallet *utils.HDWallet, toWallet *
 	return env.te.NewBlockBuilder("Not a vote").
 		LatestMilestoneAsParents().
 		FromWallet(fromWallet).
-		ToWallet(toWallet).
 		Amount(amount).
-		Build().
+		BuildTransactionToWallet(toWallet).
 		Store().
 		BookOnWallets()
 }
@@ -429,7 +426,7 @@ func (env *ParticipationTestEnv) AssertBallotAnswerStatusAtConfirmedMilestoneInd
 	env.AssertBallotAnswerStatus(eventID, env.ConfirmedMilestoneIndex(), currentVoteAmount, accumulatedVoteAmount, questionIndex, answerValue)
 }
 
-func (env *ParticipationTestEnv) AssertBallotAnswerStatus(eventID participation.EventID, milestone milestone.Index, currentVoteAmount uint64, accumulatedVoteAmount uint64, questionIndex int, answerValue uint8) {
+func (env *ParticipationTestEnv) AssertBallotAnswerStatus(eventID participation.EventID, milestone iotago.MilestoneIndex, currentVoteAmount uint64, accumulatedVoteAmount uint64, questionIndex int, answerValue uint8) {
 	status, err := env.ParticipationManager().EventStatus(eventID, milestone)
 	require.NoError(env.t, err)
 	env.PrintJSON(status)
@@ -442,7 +439,7 @@ func (env *ParticipationTestEnv) AssertStakingRewardsStatusAtConfirmedMilestoneI
 	env.AssertStakingRewardsStatus(eventID, env.ConfirmedMilestoneIndex(), stakedAmount, rewardedAmount)
 }
 
-func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participation.EventID, milestone milestone.Index, stakedAmount uint64, rewardedAmount uint64) {
+func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participation.EventID, milestone iotago.MilestoneIndex, stakedAmount uint64, rewardedAmount uint64) {
 	status, err := env.ParticipationManager().EventStatus(eventID, milestone)
 	require.NoError(env.t, err)
 	env.PrintJSON(status)
@@ -457,7 +454,7 @@ func (env *ParticipationTestEnv) AssertStakingRewardsStatus(eventID participatio
 	require.Exactly(env.t, rewardedAmount, status.Staking.Rewarded)
 }
 
-func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participation.EventID, sentParticipations *SentParticipations, startMilestoneIndex milestone.Index, endMilestoneIndex milestone.Index, amount uint64) {
+func (env *ParticipationTestEnv) AssertTrackedParticipation(eventID participation.EventID, sentParticipations *SentParticipations, startMilestoneIndex iotago.MilestoneIndex, endMilestoneIndex iotago.MilestoneIndex, amount uint64) {
 	trackedParticipation, err := env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, sentParticipations.Block().GeneratedUTXO().OutputID())
 	require.NoError(env.t, err)
 	require.Equal(env.t, sentParticipations.Block().GeneratedUTXO().OutputID(), trackedParticipation.OutputID)
@@ -473,7 +470,7 @@ func (env *ParticipationTestEnv) AssertInvalidParticipation(eventID participatio
 	require.ErrorIs(env.t, err, participation.ErrUnknownParticipation)
 }
 
-func (env *ParticipationTestEnv) AssertRewardBalance(eventID participation.EventID, address iotago.Address, balance uint64, milestoneIndex ...milestone.Index) {
+func (env *ParticipationTestEnv) AssertRewardBalance(eventID participation.EventID, address iotago.Address, balance uint64, milestoneIndex ...iotago.MilestoneIndex) {
 
 	msIndex := env.ConfirmedMilestoneIndex()
 	if len(milestoneIndex) > 0 {

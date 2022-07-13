@@ -5,7 +5,6 @@ import (
 	"encoding/binary"
 	"sort"
 
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -24,10 +23,10 @@ type AddressRewards struct {
 	// Rewards is a map of rewards per event.
 	Rewards map[string]*AddressReward `json:"rewards"`
 	// MilestoneIndex is the milestone index the rewards were calculated for.
-	MilestoneIndex milestone.Index `json:"milestoneIndex"`
+	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 }
 
-func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex ...milestone.Index) (*AddressRewards, error) {
+func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex ...iotago.MilestoneIndex) (*AddressRewards, error) {
 	pm.RLock()
 	defer pm.RUnlock()
 
@@ -68,7 +67,7 @@ type EventRewards struct {
 	// Symbol is the symbol of the rewarded tokens.
 	Symbol string `json:"symbol"`
 	// MilestoneIndex is the milestone index the rewards were calculated for.
-	MilestoneIndex milestone.Index `json:"milestoneIndex"`
+	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 	// TotalRewards is the total reward.
 	TotalRewards uint64 `json:"totalRewards"`
 	// Checksum is the SHA256 checksum of the staking amount and rewards calculated for this MilestoneIndex.
@@ -77,7 +76,7 @@ type EventRewards struct {
 	Rewards map[string]uint64 `json:"rewards"`
 }
 
-func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...milestone.Index) (*EventRewards, error) {
+func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneIndex) (*EventRewards, error) {
 	protoParas := pm.protocolParametersFunc()
 
 	pm.RLock()

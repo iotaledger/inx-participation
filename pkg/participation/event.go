@@ -11,7 +11,6 @@ import (
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -303,7 +302,7 @@ func (e *Event) Staking() *Staking {
 }
 
 // Status returns a human-readable status of the event. Possible values are "upcoming", "commencing", "holding" and "ended".
-func (e *Event) Status(atIndex milestone.Index) string {
+func (e *Event) Status(atIndex iotago.MilestoneIndex) string {
 	if atIndex < e.CommenceMilestoneIndex() {
 		return "upcoming"
 	}
@@ -317,37 +316,37 @@ func (e *Event) Status(atIndex milestone.Index) string {
 }
 
 // CommenceMilestoneIndex returns the milestone index the commencing phase of the participation starts.
-func (e *Event) CommenceMilestoneIndex() milestone.Index {
-	return milestone.Index(e.MilestoneIndexCommence)
+func (e *Event) CommenceMilestoneIndex() iotago.MilestoneIndex {
+	return iotago.MilestoneIndex(e.MilestoneIndexCommence)
 }
 
 // StartMilestoneIndex returns the milestone index the holding phase of the participation starts.
-func (e *Event) StartMilestoneIndex() milestone.Index {
-	return milestone.Index(e.MilestoneIndexStart)
+func (e *Event) StartMilestoneIndex() iotago.MilestoneIndex {
+	return iotago.MilestoneIndex(e.MilestoneIndexStart)
 }
 
 // EndMilestoneIndex returns the milestone index the participation ends.
-func (e *Event) EndMilestoneIndex() milestone.Index {
-	return milestone.Index(e.MilestoneIndexEnd)
+func (e *Event) EndMilestoneIndex() iotago.MilestoneIndex {
+	return iotago.MilestoneIndex(e.MilestoneIndexEnd)
 }
 
 // ShouldAcceptParticipation returns true if the event should accept the participation for the given milestone index.
-func (e *Event) ShouldAcceptParticipation(forIndex milestone.Index) bool {
+func (e *Event) ShouldAcceptParticipation(forIndex iotago.MilestoneIndex) bool {
 	return forIndex > e.CommenceMilestoneIndex() && forIndex <= e.EndMilestoneIndex()
 }
 
 // IsAcceptingParticipation returns true if the event already commenced or started the holding phase for the given milestone index.
-func (e *Event) IsAcceptingParticipation(atIndex milestone.Index) bool {
+func (e *Event) IsAcceptingParticipation(atIndex iotago.MilestoneIndex) bool {
 	return atIndex >= e.CommenceMilestoneIndex() && atIndex < e.EndMilestoneIndex()
 }
 
 // ShouldCountParticipation returns true if the event should count the participation for the given milestone index.
-func (e *Event) ShouldCountParticipation(forIndex milestone.Index) bool {
+func (e *Event) ShouldCountParticipation(forIndex iotago.MilestoneIndex) bool {
 	return forIndex > e.StartMilestoneIndex() && forIndex <= e.EndMilestoneIndex()
 }
 
 // IsCountingParticipation returns true if the event already started the holding phase for the given milestone index.
-func (e *Event) IsCountingParticipation(atIndex milestone.Index) bool {
+func (e *Event) IsCountingParticipation(atIndex iotago.MilestoneIndex) bool {
 	return atIndex >= e.StartMilestoneIndex() && atIndex < e.EndMilestoneIndex()
 }
 

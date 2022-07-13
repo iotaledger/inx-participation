@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 // NewEventBuilder creates a new EventBuilder.
-func NewEventBuilder(name string, milestoneCommence milestone.Index, milestoneBeginHolding milestone.Index, milestoneEnd milestone.Index, additionalInfo string) *EventBuilder {
+func NewEventBuilder(name string, milestoneCommence iotago.MilestoneIndex, milestoneBeginHolding iotago.MilestoneIndex, milestoneEnd iotago.MilestoneIndex, additionalInfo string) *EventBuilder {
 	return &EventBuilder{
 		event: &Event{
 			Name:                   name,

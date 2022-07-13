@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -37,7 +36,7 @@ type StakingStatus struct {
 // EventStatus holds the status of the event
 type EventStatus struct {
 	// MilestoneIndex is the milestone index the status was calculated for.
-	MilestoneIndex milestone.Index `json:"milestoneIndex"`
+	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 	// Status is the status of the event. Valid options are: "upcoming", "commencing", "holding" and "ended".
 	Status string `json:"status"`
 	// Questions holds the answer status of the different questions of the event.
@@ -49,7 +48,7 @@ type EventStatus struct {
 }
 
 // EventStatus returns the EventStatus for an event with the given eventID.
-func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...milestone.Index) (*EventStatus, error) {
+func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago.MilestoneIndex) (*EventStatus, error) {
 	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
 	pm.RLock()
 	defer pm.RUnlock()

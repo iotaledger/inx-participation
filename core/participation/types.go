@@ -1,6 +1,8 @@
 package participation
 
-import "github.com/iotaledger/hornet/pkg/model/milestone"
+import (
+	iotago "github.com/iotaledger/iota.go/v3"
+)
 
 // EventsResponse defines the response of a GET RouteParticipationEvents REST API call.
 type EventsResponse struct {
@@ -21,9 +23,9 @@ type TrackedParticipation struct {
 	// Amount is the amount of tokens that were included in the output the participation was made.
 	Amount uint64 `json:"amount"`
 	// StartMilestoneIndex is the milestone index the participation started.
-	StartMilestoneIndex milestone.Index `json:"startMilestoneIndex"`
+	StartMilestoneIndex iotago.MilestoneIndex `json:"startMilestoneIndex"`
 	// EndMilestoneIndex is the milestone index the participation ended. 0 if the participation is still active.
-	EndMilestoneIndex milestone.Index `json:"endMilestoneIndex"`
+	EndMilestoneIndex iotago.MilestoneIndex `json:"endMilestoneIndex"`
 }
 
 // OutputStatusResponse defines the response of a GET RouteOutputStatus REST API call.

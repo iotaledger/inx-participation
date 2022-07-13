@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	inx "github.com/iotaledger/inx/go"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -31,12 +30,12 @@ func participationOutputFromINXOutput(output *inx.LedgerOutput) *participation.P
 	}
 }
 
-func NodeStatus() (confirmedIndex milestone.Index, pruningIndex milestone.Index) {
+func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
 	status, err := deps.NodeBridge.NodeStatus()
 	if err != nil {
 		return 0, 0
 	}
-	return milestone.Index(status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex()), milestone.Index(status.GetTanglePruningIndex())
+	return iotago.MilestoneIndex(status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex()), iotago.MilestoneIndex(status.GetTanglePruningIndex())
 }
 
 func BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
@@ -72,9 +71,9 @@ func OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOu
 	}
 }
 
-func LedgerUpdates(ctx context.Context, startIndex milestone.Index, endIndex milestone.Index, handler func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
+func LedgerUpdates(ctx context.Context, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex, handler func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
 	return deps.NodeBridge.ListenToLedgerUpdates(ctx, uint32(startIndex), uint32(endIndex), func(update *inx.LedgerUpdate) error {
-		index := milestone.Index(update.GetMilestoneIndex())
+		index := iotago.MilestoneIndex(update.GetMilestoneIndex())
 
 		var created []*participation.ParticipationOutput
 		for _, output := range update.GetCreated() {

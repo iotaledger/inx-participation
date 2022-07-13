@@ -7,7 +7,6 @@ import (
 
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hornet/pkg/model/storage"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	"github.com/iotaledger/inx-participation/pkg/participation/test"
@@ -17,9 +16,9 @@ import (
 
 func TestEventStateHelpers(t *testing.T) {
 
-	eventCommenceIndex := milestone.Index(90)
-	eventStartIndex := milestone.Index(100)
-	eventEndIndex := milestone.Index(200)
+	eventCommenceIndex := iotago.MilestoneIndex(90)
+	eventStartIndex := iotago.MilestoneIndex(100)
+	eventEndIndex := iotago.MilestoneIndex(200)
 
 	eventBuilder := participation.NewEventBuilder("Test", eventCommenceIndex, eventStartIndex, eventEndIndex, "Sample")
 
@@ -108,7 +107,7 @@ func TestEventStates(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	require.Empty(t, env.ParticipationManager().Events())
 	eventID := env.StoreDefaultEvent(5, 1, 2)
@@ -117,9 +116,9 @@ func TestEventStates(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(6), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(8), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(6), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(8), event.EndMilestoneIndex())
 
 	// No participation should be running right now
 	require.Equal(t, 1, len(env.ParticipationManager().Events()))
@@ -167,24 +166,21 @@ func TestTaggedDataPayloads(t *testing.T) {
 	noTaggedDataMessage := env.NewBlockBuilder().
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
-		ToWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
-		Build()
+		BuildTransactionToWallet(env.Wallet2)
 
 	invalidPayloadMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
-		ToWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		TagData([]byte{0}).
-		Build()
+		BuildTransactionToWallet(env.Wallet2)
 
 	emptyTaggedDataMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
-		ToWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
-		Build()
+		BuildTransactionToWallet(env.Wallet2)
 
 	b := participation.NewParticipationsBuilder()
 	b.AddParticipation(&participation.Participation{
@@ -199,18 +195,16 @@ func TestTaggedDataPayloads(t *testing.T) {
 	wrongAddressMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
-		ToWallet(env.Wallet3).
 		Amount(env.Wallet2.Balance()).
 		TagData(participationsData).
-		Build()
+		BuildTransactionToWallet(env.Wallet3)
 
 	multipleOutputsMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
-		ToWallet(env.Wallet3).
 		Amount(10_000_000).
 		TagData(participationsData).
-		Build()
+		BuildTransactionToWallet(env.Wallet3)
 
 	txBuilder := builder.NewTransactionBuilder(env.ProtocolParameters().NetworkID())
 	txBuilder.AddTaggedDataPayload(&iotago.TaggedData{
@@ -268,7 +262,7 @@ func TestSingleBallotVote(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 3)
 
@@ -276,9 +270,9 @@ func TestSingleBallotVote(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(10), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(10), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
 	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
@@ -353,8 +347,8 @@ func TestSingleBallotVote(t *testing.T) {
 	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Block().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
 	require.Equal(t, castVote.Block().StoredBlockID(), trackedVote.BlockID)
-	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
-	require.Equal(t, milestone.Index(11), trackedVote.EndIndex)
+	require.Equal(t, iotago.MilestoneIndex(6), trackedVote.StartIndex)
+	require.Equal(t, iotago.MilestoneIndex(11), trackedVote.EndIndex)
 
 	var messageFromParticipationStore *participation.ParticipationBlock
 	messageFromParticipationStore, err = env.ParticipationManager().BlockForEventAndBlockID(eventID, trackedVote.BlockID)
@@ -368,7 +362,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 3)
 
@@ -376,9 +370,9 @@ func TestInvalidVoteHandling(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(10), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(10), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
 	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
@@ -427,10 +421,9 @@ func TestInvalidVoteHandling(t *testing.T) {
 	invalidParticipation := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet1).
-		ToWallet(env.Wallet1).
 		Amount(env.Wallet1.Balance()).
 		TagData([]byte{0x00}).
-		Build().
+		BuildTransactionToWallet(env.Wallet1).
 		Store().
 		BookOnWallets()
 
@@ -440,8 +433,8 @@ func TestInvalidVoteHandling(t *testing.T) {
 	trackedVote, err = env.ParticipationManager().ParticipationForOutputIDWithoutLocking(eventID, castVote.Block().GeneratedUTXO().OutputID())
 	require.NoError(t, err)
 	require.Equal(t, castVote.Block().StoredBlockID(), trackedVote.BlockID)
-	require.Equal(t, milestone.Index(6), trackedVote.StartIndex)
-	require.Equal(t, milestone.Index(9), trackedVote.EndIndex)
+	require.Equal(t, iotago.MilestoneIndex(6), trackedVote.StartIndex)
+	require.Equal(t, iotago.MilestoneIndex(9), trackedVote.EndIndex)
 
 	env.AssertDefaultBallotAnswerStatus(eventID, 0, 1_000)
 
@@ -452,7 +445,7 @@ func TestBallotVoteCancel(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 5)
 
@@ -460,9 +453,9 @@ func TestBallotVoteCancel(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	// Event should not be accepting votes yet
 	require.Equal(t, 0, len(env.ParticipationManager().EventsAcceptingParticipation(env.ConfirmedMilestoneIndex())))
@@ -529,7 +522,7 @@ func TestBallotAddVoteBalanceBySweeping(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 5)
 
@@ -537,9 +530,9 @@ func TestBallotAddVoteBalanceBySweeping(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 	env.IssueMilestone() // 6
@@ -582,7 +575,7 @@ func TestBallotAddVoteBalanceByMultipleOutputs(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 5)
 
@@ -590,9 +583,9 @@ func TestBallotAddVoteBalanceByMultipleOutputs(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 	env.IssueMilestone() // 6
@@ -640,7 +633,7 @@ func TestMultipleBallotVotes(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 5)
 
@@ -648,9 +641,9 @@ func TestMultipleBallotVotes(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured participation indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 	env.IssueMilestone() // 6
@@ -719,7 +712,7 @@ func TestChangeOpinionMidVote(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID := env.StoreDefaultEvent(5, 2, 5)
 
@@ -727,9 +720,9 @@ func TestChangeOpinionMidVote(t *testing.T) {
 	require.NotNil(t, event)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 	env.IssueMilestone() // 6
@@ -793,7 +786,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventID1 := env.StoreDefaultEvent(5, 2, 5)
 	eventID2 := env.StoreDefaultEvent(7, 2, 5)
@@ -805,13 +798,13 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 	require.NotNil(t, event1)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event1.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event1.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event1.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event1.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event1.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event1.EndMilestoneIndex())
 
-	require.Equal(t, milestone.Index(7), event2.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(9), event2.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(14), event2.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event2.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(9), event2.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(14), event2.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 
@@ -958,7 +951,7 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	event1 := env.DefaultEvent(5, 2, 5)
 	event2 := env.DefaultEvent(7, 2, 5)
@@ -970,13 +963,13 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 	require.NoError(t, err)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event1.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event1.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event1.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event1.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event1.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event1.EndMilestoneIndex())
 
-	require.Equal(t, milestone.Index(7), event2.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(9), event2.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(14), event2.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event2.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(9), event2.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(14), event2.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 
@@ -1092,7 +1085,7 @@ func TestStakingRewards(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventBuilder := participation.NewEventBuilder("AlbinoPugCoin", 5, 7, 12, "The first DogCoin on the Tangle")
 	eventBuilder.Payload(&participation.Staking{
@@ -1111,9 +1104,9 @@ func TestStakingRewards(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 	env.AssertEventsCount(1, 0)
@@ -1269,7 +1262,7 @@ func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventBuilder := participation.NewEventBuilder("AlbinoPugCoin", 5, 7, 12, "The first DogCoin on the Tangle")
 	eventBuilder.Payload(&participation.Staking{
@@ -1287,9 +1280,9 @@ func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 
@@ -1361,7 +1354,7 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventBuilder := participation.NewEventBuilder("AlbinoPugCoin", 5, 7, 12, "The first DogCoin on the Tangle")
 	eventBuilder.Payload(&participation.Staking{
@@ -1380,9 +1373,9 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(5), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(7), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(12), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(7), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(12), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
 
@@ -1397,10 +1390,9 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 	doubleStakeWallet1 := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet1).
-		ToWallet(env.Wallet1).
 		Amount(env.Wallet1.Balance()).
 		TagData(ms.Bytes()).
-		Build().
+		BuildTransactionToWallet(env.Wallet1).
 		Store().
 		BookOnWallets()
 
