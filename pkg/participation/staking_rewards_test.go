@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	"github.com/iotaledger/inx-participation/pkg/participation/test"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -34,7 +33,7 @@ func stakingEnv(t *testing.T) *stakingTestEnv {
 	env := test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
-	require.Equal(t, milestone.Index(4), confirmedMilestoneIndex)
+	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
 
 	eventBuilder := participation.NewEventBuilder("AlbinoPugCoin", 6, 10, 15, "The first DogCoin on the Tangle")
 	eventBuilder.Payload(&participation.Staking{
@@ -52,12 +51,12 @@ func stakingEnv(t *testing.T) *stakingTestEnv {
 	require.NoError(t, err)
 
 	// Verify the configured indexes
-	require.Equal(t, milestone.Index(6), event.CommenceMilestoneIndex())
-	require.Equal(t, milestone.Index(10), event.StartMilestoneIndex())
-	require.Equal(t, milestone.Index(15), event.EndMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(6), event.CommenceMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(10), event.StartMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(15), event.EndMilestoneIndex())
 
 	env.IssueMilestone() // 5
-	require.Equal(t, milestone.Index(5), env.ConfirmedMilestoneIndex())
+	require.Equal(t, iotago.MilestoneIndex(5), env.ConfirmedMilestoneIndex())
 
 	env.AssertEventsCount(0, 0)
 	env.IssueMilestone() // 6
@@ -133,7 +132,7 @@ func (s *stakingTestEnv) AssertWalletRewards(expected uint64) {
 	s.env.AssertRewardBalance(s.eventID, s.env.Wallet1.Address(), expected)
 }
 
-func (s *stakingTestEnv) AssertWalletRewardsAtIndex(expected uint64, milestoneIndex milestone.Index) {
+func (s *stakingTestEnv) AssertWalletRewardsAtIndex(expected uint64, milestoneIndex iotago.MilestoneIndex) {
 	s.env.AssertRewardBalance(s.eventID, s.env.Wallet1.Address(), expected, milestoneIndex)
 }
 
@@ -525,8 +524,8 @@ func TestTotalRewards(t *testing.T) {
 
 	participations := []struct {
 		amount     uint64
-		startIndex milestone.Index
-		endIndex   milestone.Index
+		startIndex iotago.MilestoneIndex
+		endIndex   iotago.MilestoneIndex
 	}{
 		{138706054, 2426818, 2430387},
 		{88706054, 2430415, 2664079},
@@ -543,9 +542,9 @@ func TestTotalRewards(t *testing.T) {
 
 func assertTotalRewardsFromParticipations(t *testing.T, participations []struct {
 	amount     uint64
-	startIndex milestone.Index
-	endIndex   milestone.Index
-}, milestoneIndexToCalculate milestone.Index, expectedRewards uint64) {
+	startIndex iotago.MilestoneIndex
+	endIndex   iotago.MilestoneIndex
+}, milestoneIndexToCalculate iotago.MilestoneIndex, expectedRewards uint64) {
 
 	env := test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
 	defer env.Cleanup()

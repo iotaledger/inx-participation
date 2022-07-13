@@ -9,7 +9,6 @@ import (
 
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/testutil"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -27,7 +26,7 @@ func RandOutputID() iotago.OutputID {
 }
 
 func RandomTrackedParticipation() *participation.TrackedParticipation {
-	msIndex := milestone.Index(rand.Int31())
+	msIndex := iotago.MilestoneIndex(rand.Int31())
 	return &participation.TrackedParticipation{
 		EventID:    RandEventID(),
 		OutputID:   RandOutputID(),
@@ -52,11 +51,11 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 
 	startIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.StartIndex, milestone.Index(startIndex))
+	require.Exactly(t, p.StartIndex, iotago.MilestoneIndex(startIndex))
 
 	endIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.EndIndex, milestone.Index(endIndex))
+	require.Exactly(t, p.EndIndex, iotago.MilestoneIndex(endIndex))
 
 	require.Equal(t, 48, ms.ReadOffset())
 }
@@ -66,7 +65,7 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	outputID := RandOutputID()
 	blockID := RandBlockID()
 	amount := uint64(rand.Int63())
-	startIndex := milestone.Index(rand.Int31())
+	startIndex := iotago.MilestoneIndex(rand.Int31())
 	endIndex := startIndex + 25
 
 	ms := marshalutil.New(67)

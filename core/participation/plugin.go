@@ -13,10 +13,10 @@ import (
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/core/shutdown"
 	"github.com/iotaledger/hornet/pkg/database"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/inx-app/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/daemon"
 	"github.com/iotaledger/inx-participation/pkg/participation"
+	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func init() {
@@ -105,7 +105,7 @@ func run() error {
 			startIndex = startIndex + 1
 		}
 
-		if err := LedgerUpdates(ctx, startIndex, 0, func(index milestone.Index, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
+		if err := LedgerUpdates(ctx, startIndex, 0, func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
 			timeStart := time.Now()
 			if err := deps.ParticipationManager.ApplyNewLedgerUpdate(index, created, consumed); err != nil {
 				CoreComponent.LogPanicf("ApplyNewLedgerUpdate failed: %s", err)

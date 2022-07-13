@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hornet/pkg/restapi"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -143,7 +142,7 @@ func deleteEvent(c echo.Context) error {
 	return nil
 }
 
-func parseMilestoneIndexQueryParam(c echo.Context) (milestone.Index, error) {
+func parseMilestoneIndexQueryParam(c echo.Context) (iotago.MilestoneIndex, error) {
 	milestoneIndexParam := c.QueryParam(restapi.ParameterMilestoneIndex)
 	if len(milestoneIndexParam) == 0 {
 		return 0, nil
@@ -153,7 +152,7 @@ func parseMilestoneIndexQueryParam(c echo.Context) (milestone.Index, error) {
 	if err != nil {
 		return 0, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid milestone index: %s, error: %s", milestoneIndexParam, err)
 	}
-	return milestone.Index(uint32(intParam)), nil
+	return iotago.MilestoneIndex(uint32(intParam)), nil
 }
 
 func getEventStatus(c echo.Context) (*participation.EventStatus, error) {
@@ -167,7 +166,7 @@ func getEventStatus(c echo.Context) (*participation.EventStatus, error) {
 		return nil, err
 	}
 
-	var milestoneIndexFilter []milestone.Index
+	var milestoneIndexFilter []iotago.MilestoneIndex
 	if milestoneIndex > 0 {
 		milestoneIndexFilter = append(milestoneIndexFilter, milestoneIndex)
 	}

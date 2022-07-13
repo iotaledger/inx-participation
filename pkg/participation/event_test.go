@@ -11,7 +11,6 @@ import (
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hive.go/testutil"
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -180,7 +179,7 @@ func RandStakingEvent(nominator uint32, denominator uint32, duration uint32) *pa
 		RandString(100),
 		5,
 		6,
-		milestone.Index(6+duration),
+		iotago.MilestoneIndex(6+duration),
 		RandString(100),
 	)
 

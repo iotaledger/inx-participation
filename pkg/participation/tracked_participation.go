@@ -1,7 +1,6 @@
 package participation
 
 import (
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hive.go/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -17,9 +16,9 @@ type TrackedParticipation struct {
 	// Amount is the amount of tokens that were included in the output the participation was made.
 	Amount uint64
 	// StartIndex is the milestone index the participation started.
-	StartIndex milestone.Index
+	StartIndex iotago.MilestoneIndex
 	// EndIndex is the milestone index the participation ended. 0 if the participation is still active.
-	EndIndex milestone.Index
+	EndIndex iotago.MilestoneIndex
 }
 
 func parseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
@@ -108,8 +107,8 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 		OutputID:   outputID,
 		BlockID:    blockID,
 		Amount:     amount,
-		StartIndex: milestone.Index(start),
-		EndIndex:   milestone.Index(end),
+		StartIndex: iotago.MilestoneIndex(start),
+		EndIndex:   iotago.MilestoneIndex(end),
 	}, nil
 }
 

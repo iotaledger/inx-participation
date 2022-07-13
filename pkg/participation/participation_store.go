@@ -3,7 +3,6 @@ package participation
 import (
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/hornet/pkg/model/milestone"
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -33,13 +32,13 @@ func ledgerIndexKey() []byte {
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) storeLedgerIndex(index milestone.Index) error {
+func (pm *ParticipationManager) storeLedgerIndex(index iotago.MilestoneIndex) error {
 	m := marshalutil.New(4)
 	m.WriteUint32(uint32(index))
 	return pm.participationStore.Set(ledgerIndexKey(), m.Bytes())
 }
 
-func (pm *ParticipationManager) readLedgerIndex() (milestone.Index, error) {
+func (pm *ParticipationManager) readLedgerIndex() (iotago.MilestoneIndex, error) {
 	v, err := pm.participationStore.Get(ledgerIndexKey())
 	if err != nil {
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -49,7 +48,7 @@ func (pm *ParticipationManager) readLedgerIndex() (milestone.Index, error) {
 	}
 	m := marshalutil.New(v)
 	u, err := m.ReadUint32()
-	return milestone.Index(u), err
+	return iotago.MilestoneIndex(u), err
 }
 
 // Events
@@ -360,7 +359,7 @@ func currentBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIndex uint8, answerIndex uint8) []byte {
+func currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIndex uint8, answerIndex uint8) []byte {
 	m := marshalutil.New(39)
 	m.WriteBytes(currentBallotVoteBalanceKeyPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                         // 4 bytes
@@ -376,7 +375,7 @@ func accumulatedBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIndex uint8, answerIndex uint8) []byte {
+func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIndex uint8, answerIndex uint8) []byte {
 	m := marshalutil.New(39)
 	m.WriteBytes(accumulatedBallotVoteBalanceKeyPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                             // 4 bytes
@@ -385,7 +384,7 @@ func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milest
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, output *ParticipationOutput, startIndex milestone.Index, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, output *ParticipationOutput, startIndex iotago.MilestoneIndex, mutations kvstore.BatchedMutations) error {
 	trackedVote := &TrackedParticipation{
 		EventID:    eventID,
 		OutputID:   output.OutputID,
@@ -406,7 +405,7 @@ func (pm *ParticipationManager) startParticipationAtMilestone(eventID EventID, o
 	return mutations.Set(participationKeyForEventAndAddressOutputID(eventID, addressBytes, output.OutputID), []byte{})
 }
 
-func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, output *ParticipationOutput, endIndex milestone.Index, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, output *ParticipationOutput, endIndex iotago.MilestoneIndex, mutations kvstore.BatchedMutations) error {
 	key := participationKeyForEventAndOutputID(eventID, output.OutputID)
 
 	value, err := pm.participationStore.Get(key)
@@ -433,7 +432,7 @@ func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, out
 	return mutations.Set(participationKeyForEventAndSpentOutputID(eventID, output.OutputID), participation.ValueBytes())
 }
 
-func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID, endIndex milestone.Index, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID, endIndex iotago.MilestoneIndex, mutations kvstore.BatchedMutations) error {
 	var innerErr error
 	if err := pm.participationStore.Iterate(participationKeyForEventOutputsPrefix(eventID), func(key kvstore.Key, value kvstore.Value) bool {
 
@@ -466,7 +465,7 @@ func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID,
 	return innerErr
 }
 
-func (pm *ParticipationManager) currentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
+func (pm *ParticipationManager) currentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8) (uint64, error) {
 	val, err := pm.participationStore.Get(currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx))
 
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -482,7 +481,7 @@ func (pm *ParticipationManager) currentBallotVoteBalanceForQuestionAndAnswer(eve
 	return ms.ReadUint64()
 }
 
-func (pm *ParticipationManager) accumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8) (uint64, error) {
+func (pm *ParticipationManager) accumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8) (uint64, error) {
 	val, err := pm.participationStore.Get(accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx))
 
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -498,19 +497,19 @@ func (pm *ParticipationManager) accumulatedBallotVoteBalanceForQuestionAndAnswer
 	return ms.ReadUint64()
 }
 
-func setCurrentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8, current uint64, mutations kvstore.BatchedMutations) error {
+func setCurrentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8, current uint64, mutations kvstore.BatchedMutations) error {
 	ms := marshalutil.New(8)
 	ms.WriteUint64(current)
 	return mutations.Set(currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx), ms.Bytes())
 }
 
-func setAccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone milestone.Index, questionIdx uint8, answerIdx uint8, total uint64, mutations kvstore.BatchedMutations) error {
+func setAccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8, total uint64, mutations kvstore.BatchedMutations) error {
 	ms := marshalutil.New(8)
 	ms.WriteUint64(total)
 	return mutations.Set(accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx), ms.Bytes())
 }
 
-func (pm *ParticipationManager) startCountingBallotAnswers(event *Event, vote *Participation, milestone milestone.Index, amount uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) startCountingBallotAnswers(event *Event, vote *Participation, milestone iotago.MilestoneIndex, amount uint64, mutations kvstore.BatchedMutations) error {
 	questions := event.BallotQuestions()
 	for idx, answerByte := range vote.Answers {
 		questionIndex := uint8(idx)
@@ -532,7 +531,7 @@ func (pm *ParticipationManager) startCountingBallotAnswers(event *Event, vote *P
 	return nil
 }
 
-func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Participation, milestone milestone.Index, amount uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Participation, milestone iotago.MilestoneIndex, amount uint64, mutations kvstore.BatchedMutations) error {
 	questions := event.BallotQuestions()
 	for idx, answerByte := range vote.Answers {
 		questionIndex := uint8(idx)
@@ -560,7 +559,7 @@ func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Pa
 
 // Staking
 
-func (pm *ParticipationManager) RewardsForTrackedParticipationWithoutLocking(trackedParticipation *TrackedParticipation, atIndex milestone.Index) (uint64, error) {
+func (pm *ParticipationManager) RewardsForTrackedParticipationWithoutLocking(trackedParticipation *TrackedParticipation, atIndex iotago.MilestoneIndex) (uint64, error) {
 
 	event := pm.Event(trackedParticipation.EventID)
 	if event == nil {
@@ -608,7 +607,7 @@ func (pm *ParticipationManager) RewardsForTrackedParticipationWithoutLocking(tra
 	return rewardsForParticipation, nil
 }
 
-func (pm *ParticipationManager) StakingRewardForAddressWithoutLocking(eventID EventID, address iotago.Address, msIndex milestone.Index) (uint64, error) {
+func (pm *ParticipationManager) StakingRewardForAddressWithoutLocking(eventID EventID, address iotago.Address, msIndex iotago.MilestoneIndex) (uint64, error) {
 	var rewards uint64
 	trackedParticipations, err := pm.ParticipationsForAddressWithoutLocking(eventID, address)
 	if err != nil {
@@ -631,7 +630,7 @@ func currentRewardsKeyForEventPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func currentRewardsPerMilestoneKeyForEvent(eventID EventID, milestone milestone.Index) []byte {
+func currentRewardsPerMilestoneKeyForEvent(eventID EventID, milestone iotago.MilestoneIndex) []byte {
 	m := marshalutil.New(37)
 	m.WriteBytes(currentRewardsKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                       // 4 bytes
@@ -645,7 +644,7 @@ func totalParticipationStakingKeyForEventPrefix(eventID EventID) []byte {
 	return m.Bytes()
 }
 
-func totalParticipationStakingKeyForEvent(eventID EventID, milestone milestone.Index) []byte {
+func totalParticipationStakingKeyForEvent(eventID EventID, milestone iotago.MilestoneIndex) []byte {
 	m := marshalutil.New(37)
 	m.WriteBytes(totalParticipationStakingKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                                  // 4 bytes
@@ -681,7 +680,7 @@ func (t *totalStakingParticipation) valueBytes() []byte {
 	return m.Bytes()
 }
 
-func (pm *ParticipationManager) currentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone milestone.Index) (uint64, error) {
+func (pm *ParticipationManager) currentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex) (uint64, error) {
 	value, err := pm.participationStore.Get(currentRewardsPerMilestoneKeyForEvent(eventID, milestone))
 	if err != nil {
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -693,7 +692,7 @@ func (pm *ParticipationManager) currentRewardsPerMilestoneForStakingEvent(eventI
 	return m.ReadUint64()
 }
 
-func (pm *ParticipationManager) increaseCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone milestone.Index, rewards uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) increaseCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, rewards uint64, mutations kvstore.BatchedMutations) error {
 	current, err := pm.currentRewardsPerMilestoneForStakingEvent(eventID, milestone)
 	if err != nil {
 		return err
@@ -702,7 +701,7 @@ func (pm *ParticipationManager) increaseCurrentRewardsPerMilestoneForStakingEven
 	return pm.setCurrentRewardsPerMilestoneForStakingEvent(eventID, milestone, current, mutations)
 }
 
-func (pm *ParticipationManager) decreaseCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone milestone.Index, rewards uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) decreaseCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, rewards uint64, mutations kvstore.BatchedMutations) error {
 	current, err := pm.currentRewardsPerMilestoneForStakingEvent(eventID, milestone)
 	if err != nil {
 		return err
@@ -714,13 +713,13 @@ func (pm *ParticipationManager) decreaseCurrentRewardsPerMilestoneForStakingEven
 	return pm.setCurrentRewardsPerMilestoneForStakingEvent(eventID, milestone, current, mutations)
 }
 
-func (pm *ParticipationManager) setCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone milestone.Index, rewards uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) setCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, rewards uint64, mutations kvstore.BatchedMutations) error {
 	m := marshalutil.New(8)
 	m.WriteUint64(rewards)
 	return mutations.Set(currentRewardsPerMilestoneKeyForEvent(eventID, milestone), m.Bytes())
 }
 
-func (pm *ParticipationManager) totalStakingParticipationForEvent(eventID EventID, milestone milestone.Index) (*totalStakingParticipation, error) {
+func (pm *ParticipationManager) totalStakingParticipationForEvent(eventID EventID, milestone iotago.MilestoneIndex) (*totalStakingParticipation, error) {
 	value, err := pm.participationStore.Get(totalParticipationStakingKeyForEvent(eventID, milestone))
 	if err != nil {
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
@@ -731,7 +730,7 @@ func (pm *ParticipationManager) totalStakingParticipationForEvent(eventID EventI
 	return totalStakingParticipationFromBytes(value)
 }
 
-func (pm *ParticipationManager) increaseStakedAmountForStakingEvent(eventID EventID, milestone milestone.Index, stakedAmount uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) increaseStakedAmountForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, stakedAmount uint64, mutations kvstore.BatchedMutations) error {
 	total, err := pm.totalStakingParticipationForEvent(eventID, milestone)
 	if err != nil {
 		return err
@@ -740,7 +739,7 @@ func (pm *ParticipationManager) increaseStakedAmountForStakingEvent(eventID Even
 	return mutations.Set(totalParticipationStakingKeyForEvent(eventID, milestone), total.valueBytes())
 }
 
-func (pm *ParticipationManager) decreaseStakedAmountForStakingEvent(eventID EventID, milestone milestone.Index, stakedAmount uint64, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) decreaseStakedAmountForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, stakedAmount uint64, mutations kvstore.BatchedMutations) error {
 	total, err := pm.totalStakingParticipationForEvent(eventID, milestone)
 	if err != nil {
 		return err
@@ -752,13 +751,13 @@ func (pm *ParticipationManager) decreaseStakedAmountForStakingEvent(eventID Even
 	return mutations.Set(totalParticipationStakingKeyForEvent(eventID, milestone), total.valueBytes())
 }
 
-func (pm *ParticipationManager) setTotalStakingParticipationForEvent(eventID EventID, milestone milestone.Index, total *totalStakingParticipation, mutations kvstore.BatchedMutations) error {
+func (pm *ParticipationManager) setTotalStakingParticipationForEvent(eventID EventID, milestone iotago.MilestoneIndex, total *totalStakingParticipation, mutations kvstore.BatchedMutations) error {
 	return mutations.Set(totalParticipationStakingKeyForEvent(eventID, milestone), total.valueBytes())
 }
 
 type StakingRewardsConsumer func(address iotago.Address, participation *TrackedParticipation, rewards uint64) bool
 
-func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID EventID, msIndex milestone.Index, consumer StakingRewardsConsumer) error {
+func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID EventID, msIndex iotago.MilestoneIndex, consumer StakingRewardsConsumer) error {
 	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
 	pm.RLock()
 	defer pm.RUnlock()
