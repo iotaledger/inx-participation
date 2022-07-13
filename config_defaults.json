@@ -1,8 +1,6 @@
 {
   "app": {
     "checkForUpdates": true,
-    "disablePlugins": [],
-    "enablePlugins": [],
     "stopGracePeriod": "5m"
   },
   "inx": {
@@ -16,6 +14,7 @@
     "bindAddress": "localhost:9892"
   },
   "profiling": {
+    "enabled": false,
     "bindAddress": "localhost:6060"
   }
 }
