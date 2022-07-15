@@ -12,7 +12,7 @@ import (
 
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/core/shutdown"
-	"github.com/iotaledger/hornet/pkg/database"
+	"github.com/iotaledger/hornet/v2/pkg/database"
 	"github.com/iotaledger/inx-app/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/daemon"
 	"github.com/iotaledger/inx-participation/pkg/participation"
