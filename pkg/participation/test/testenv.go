@@ -11,11 +11,11 @@ import (
 
 	"github.com/iotaledger/hive.go/kvstore"
 	"github.com/iotaledger/hive.go/kvstore/mapdb"
-	"github.com/iotaledger/hornet/pkg/model/storage"
-	"github.com/iotaledger/hornet/pkg/model/utxo"
-	"github.com/iotaledger/hornet/pkg/testsuite"
-	"github.com/iotaledger/hornet/pkg/testsuite/utils"
-	"github.com/iotaledger/hornet/pkg/whiteflag"
+	"github.com/iotaledger/hornet/v2/pkg/model/storage"
+	"github.com/iotaledger/hornet/v2/pkg/model/utxo"
+	"github.com/iotaledger/hornet/v2/pkg/testsuite"
+	"github.com/iotaledger/hornet/v2/pkg/testsuite/utils"
+	"github.com/iotaledger/hornet/v2/pkg/whiteflag"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
