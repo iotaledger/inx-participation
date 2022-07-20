@@ -8,7 +8,7 @@ require (
 	github.com/iotaledger/hornet/v2 v2.0.0-alpha9.0.20220715125533-86c439f1a199
 	github.com/iotaledger/inx-app v1.0.0-beta.1
 	github.com/iotaledger/inx/go v1.0.0-beta.1
-	github.com/iotaledger/iota.go/v3 v3.0.0-beta.1
+	github.com/iotaledger/iota.go/v3 v3.0.0-beta.2
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
