@@ -5,10 +5,10 @@ go 1.18
 require (
 	github.com/iotaledger/hive.go v0.0.0-20220714075325-11202fe498d6
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-20220714075325-11202fe498d6
-	github.com/iotaledger/hornet/v2 v2.0.0-alpha9.0.20220715125533-86c439f1a199
-	github.com/iotaledger/inx-app v1.0.0-beta.1
-	github.com/iotaledger/inx/go v1.0.0-beta.1
-	github.com/iotaledger/iota.go/v3 v3.0.0-beta.2
+	github.com/iotaledger/hornet/v2 v2.0.0-beta.1.0.20220721081848-6838d5b9273b
+	github.com/iotaledger/inx-app v1.0.0-beta.2
+	github.com/iotaledger/inx/go v1.0.0-beta.2
+	github.com/iotaledger/iota.go/v3 v3.0.0-beta.3
 	github.com/labstack/echo/v4 v4.7.2
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
@@ -26,7 +26,7 @@ require (
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cockroachdb/errors v1.9.0 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20211118104740-dabe8e521a4f // indirect
-	github.com/cockroachdb/pebble v0.0.0-20220708173837-d3484a60444e // indirect
+	github.com/cockroachdb/pebble v0.0.0-20220719144226-63d552794411 // indirect
 	github.com/cockroachdb/redact v1.1.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.0.1 // indirect
@@ -112,11 +112,11 @@ require (
 	golang.org/x/exp v0.0.0-20220713135740-79cabaa25d75 // indirect
 	golang.org/x/net v0.0.0-20220708220712-1185a9018129 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220712014510-0a85c31ab51e // indirect
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220609170525-579cf78fd858 // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
-	google.golang.org/genproto v0.0.0-20220714211235-042d03aeabc9 // indirect
+	google.golang.org/genproto v0.0.0-20220720214146-176da50484ac // indirect
 	google.golang.org/grpc v1.48.0 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
