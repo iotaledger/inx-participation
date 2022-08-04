@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/inx-app/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	inx "github.com/iotaledger/inx/go"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -72,11 +73,11 @@ func OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOu
 }
 
 func LedgerUpdates(ctx context.Context, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex, handler func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error) error {
-	return deps.NodeBridge.ListenToLedgerUpdates(ctx, uint32(startIndex), uint32(endIndex), func(update *inx.LedgerUpdate) error {
-		index := iotago.MilestoneIndex(update.GetMilestoneIndex())
+	return deps.NodeBridge.ListenToLedgerUpdates(ctx, startIndex, endIndex, func(update *nodebridge.LedgerUpdate) error {
+		index := update.MilestoneIndex
 
 		var created []*participation.ParticipationOutput
-		for _, output := range update.GetCreated() {
+		for _, output := range update.Created {
 			o := participationOutputFromINXOutput(output)
 			if o != nil {
 				created = append(created, o)
@@ -84,7 +85,7 @@ func LedgerUpdates(ctx context.Context, startIndex iotago.MilestoneIndex, endInd
 		}
 
 		var consumed []*participation.ParticipationOutput
-		for _, spent := range update.GetConsumed() {
+		for _, spent := range update.Consumed {
 			o := participationOutputFromINXOutput(spent.GetOutput())
 			if o != nil {
 				consumed = append(consumed, o)
