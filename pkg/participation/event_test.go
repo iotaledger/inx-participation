@@ -10,7 +10,7 @@ import (
 
 	"github.com/iotaledger/hive.go/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/testutil"
+	"github.com/iotaledger/hornet/v2/pkg/tpkg"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -31,7 +31,7 @@ func RandString(strLen int) string {
 
 func RandEventID() participation.EventID {
 	eventID := participation.EventID{}
-	copy(eventID[:], testutil.RandBytes(participation.EventIDLength))
+	copy(eventID[:], tpkg.RandBytes(participation.EventIDLength))
 	return eventID
 }
 
