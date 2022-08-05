@@ -8,20 +8,20 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/marshalutil"
-	"github.com/iotaledger/hive.go/testutil"
+	"github.com/iotaledger/hornet/v2/pkg/tpkg"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 func RandBlockID() iotago.BlockID {
 	blockID := iotago.BlockID{}
-	copy(blockID[:], testutil.RandBytes(iotago.BlockIDLength))
+	copy(blockID[:], tpkg.RandBytes(iotago.BlockIDLength))
 	return blockID
 }
 
 func RandOutputID() iotago.OutputID {
 	outputID := iotago.OutputID{}
-	copy(outputID[:], testutil.RandBytes(iotago.OutputIDLength))
+	copy(outputID[:], tpkg.RandBytes(iotago.OutputIDLength))
 	return outputID
 }
 

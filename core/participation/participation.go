@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/v2/pkg/restapi"
+	"github.com/iotaledger/inx-app/httpserver"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -43,14 +43,14 @@ func parseEventTypeQueryParam(c echo.Context) ([]uint32, error) {
 	for _, typeParam := range typeParams {
 		intParam, err := strconv.ParseUint(typeParam, 10, 32)
 		if err != nil {
-			return []uint32{}, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid event type: %s, error: %s", typeParam, err)
+			return []uint32{}, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event type: %s, error: %s", typeParam, err)
 		}
 		eventType := uint32(intParam)
 		switch eventType {
 		case participation.BallotPayloadTypeID:
 		case participation.StakingPayloadTypeID:
 		default:
-			return []uint32{}, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid event type: %s", typeParam)
+			return []uint32{}, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event type: %s", typeParam)
 		}
 		returnTypes = append(returnTypes, eventType)
 	}
@@ -60,12 +60,12 @@ func parseEventTypeQueryParam(c echo.Context) ([]uint32, error) {
 func parseEventIDParam(c echo.Context) (participation.EventID, error) {
 	eventIDHex := strings.ToLower(c.Param(ParameterParticipationEventID))
 	if eventIDHex == "" {
-		return participation.NullEventID, errors.WithMessagef(restapi.ErrInvalidParameter, "parameter \"%s\" not specified", ParameterParticipationEventID)
+		return participation.NullEventID, errors.WithMessagef(httpserver.ErrInvalidParameter, "parameter \"%s\" not specified", ParameterParticipationEventID)
 	}
 
 	eventID, err := EventIDFromHex(eventIDHex)
 	if err != nil {
-		return participation.NullEventID, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid event ID: %s, error: %s", eventIDHex, err)
+		return participation.NullEventID, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event ID: %s, error: %s", eventIDHex, err)
 	}
 
 	return eventID, nil
@@ -93,16 +93,16 @@ func createEvent(c echo.Context) (*CreateEventResponse, error) {
 
 	event := &participation.Event{}
 	if err := c.Bind(event); err != nil {
-		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid request, error: %s", err)
+		return nil, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
 	}
 
 	if _, err := event.Serialize(serializer.DeSeriModePerformValidation, nil); err != nil {
-		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid event payload, error: %s", err)
+		return nil, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event payload, error: %s", err)
 	}
 
 	eventID, err := deps.ParticipationManager.StoreEvent(event)
 	if err != nil {
-		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid event, error: %s", err)
+		return nil, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event, error: %s", err)
 	}
 
 	return &CreateEventResponse{
@@ -143,16 +143,16 @@ func deleteEvent(c echo.Context) error {
 }
 
 func parseMilestoneIndexQueryParam(c echo.Context) (iotago.MilestoneIndex, error) {
-	milestoneIndexParam := c.QueryParam(restapi.ParameterMilestoneIndex)
+	milestoneIndexParam := c.QueryParam(ParameterMilestoneIndex)
 	if len(milestoneIndexParam) == 0 {
 		return 0, nil
 	}
 
 	intParam, err := strconv.ParseUint(milestoneIndexParam, 10, 32)
 	if err != nil {
-		return 0, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid milestone index: %s, error: %s", milestoneIndexParam, err)
+		return 0, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid milestone index: %s, error: %s", milestoneIndexParam, err)
 	}
-	return iotago.MilestoneIndex(uint32(intParam)), nil
+	return iotago.MilestoneIndex(intParam), nil
 }
 
 func getEventStatus(c echo.Context) (*participation.EventStatus, error) {
@@ -182,7 +182,7 @@ func getEventStatus(c echo.Context) (*participation.EventStatus, error) {
 }
 
 func getOutputStatus(c echo.Context) (*OutputStatusResponse, error) {
-	outputID, err := restapi.ParseOutputIDParam(c)
+	outputID, err := httpserver.ParseOutputIDParam(c, ParameterOutputID)
 	if err != nil {
 		return nil, err
 	}
@@ -218,11 +218,11 @@ func ParseBech32AddressParam(c echo.Context, prefix iotago.NetworkPrefix) (iotag
 
 	hrp, bech32Address, err := iotago.ParseBech32(addressParam)
 	if err != nil {
-		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid address: %s, error: %s", addressParam, err)
+		return nil, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid address: %s, error: %s", addressParam, err)
 	}
 
 	if hrp != prefix {
-		return nil, errors.WithMessagef(restapi.ErrInvalidParameter, "invalid bech32 address, expected prefix: %s", prefix)
+		return nil, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid bech32 address, expected prefix: %s", prefix)
 	}
 
 	return bech32Address, nil
