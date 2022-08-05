@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
-	restapipkg "github.com/iotaledger/hornet/v2/pkg/restapi"
+	
+	"github.com/iotaledger/inx-app/httpserver"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 
 	// RouteOutputStatus is the route to get the vote status for a given outputID.
 	// GET returns the messageID the participation was included, the starting and ending milestone index this participation was tracked.
-	RouteOutputStatus = "/outputs/:" + restapipkg.ParameterOutputID
+	RouteOutputStatus = "/outputs/:" + ParameterOutputID
 
 	// RouteAddressBech32Status is the route to get the staking rewards for the given bech32 address.
 	RouteAddressBech32Status = "/addresses/:" + ParameterAddress
@@ -58,6 +58,12 @@ const (
 
 	// ParameterAddress is used to identify an address.
 	ParameterAddress = "address"
+
+	// ParameterOutputID is used to identify an output ID.
+	ParameterOutputID = "outputID"
+
+	// ParameterMilestoneIndex is used to identify a milestone by index.
+	ParameterMilestoneIndex = "milestoneIndex"
 )
 
 func setupRoutes(e *echo.Echo) {
@@ -68,7 +74,7 @@ func setupRoutes(e *echo.Echo) {
 			return err
 		}
 
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.POST(RouteAdminCreateEvent, func(c echo.Context) error {
@@ -79,7 +85,7 @@ func setupRoutes(e *echo.Echo) {
 		}
 
 		c.Response().Header().Set(echo.HeaderLocation, resp.EventID)
-		return restapipkg.JSONResponse(c, http.StatusCreated, resp)
+		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})
 
 	e.GET(RouteParticipationEvent, func(c echo.Context) error {
@@ -88,7 +94,7 @@ func setupRoutes(e *echo.Echo) {
 			return err
 		}
 
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.DELETE(RouteAdminDeleteEvent, func(c echo.Context) error {
@@ -104,7 +110,7 @@ func setupRoutes(e *echo.Echo) {
 			return err
 		}
 
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteOutputStatus, func(c echo.Context) error {
@@ -112,7 +118,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteAddressBech32Status, func(c echo.Context) error {
@@ -120,7 +126,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteAddressBech32Outputs, func(c echo.Context) error {
@@ -128,7 +134,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteAdminActiveParticipations, func(c echo.Context) error {
@@ -136,7 +142,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteAdminPastParticipations, func(c echo.Context) error {
@@ -144,7 +150,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
 	e.GET(RouteAdminRewards, func(c echo.Context) error {
@@ -152,6 +158,6 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
-		return restapipkg.JSONResponse(c, http.StatusOK, resp)
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 }
