@@ -7,9 +7,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/hive.go/kvstore"
+	"github.com/iotaledger/hive.go/core/kvstore"
+	"github.com/iotaledger/hive.go/core/syncutils"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hive.go/syncutils"
 	"github.com/iotaledger/hornet/v2/pkg/model/storage"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -408,12 +408,12 @@ func (pm *ParticipationManager) ApplyNewLedgerUpdate(index iotago.MilestoneIndex
 
 // applyNewUTXOForEvents checks if the new UTXO is part of a participation transaction.
 // The following rules must be satisfied:
-// 	- Must be a value transaction
-// 	- Inputs must all come from the same address. Multiple inputs are allowed.
-// 	- Has a singular output going to the same address as all input addresses.
-// 	- Output Type 0 (SigLockedSingleOutput) and Type 1 (SigLockedDustAllowanceOutput) are both valid for this.
-// 	- The Indexation must match the configured Indexation.
-//  - The participation data must be parseable.
+//   - Must be a value transaction
+//   - Inputs must all come from the same address. Multiple inputs are allowed.
+//   - Has a singular output going to the same address as all input addresses.
+//   - Output Type 0 (SigLockedSingleOutput) and Type 1 (SigLockedDustAllowanceOutput) are both valid for this.
+//   - The Indexation must match the configured Indexation.
+//   - The participation data must be parseable.
 func (pm *ParticipationManager) applyNewUTXOForEvents(index iotago.MilestoneIndex, newOutput *ParticipationOutput, events map[EventID]*Event) error {
 	block, err := pm.blockForBlockIDFunc(newOutput.BlockID)
 	if err != nil {

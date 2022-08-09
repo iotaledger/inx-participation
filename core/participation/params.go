@@ -1,7 +1,7 @@
 package participation
 
 import (
-	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/core/app"
 )
 
 type ParametersParticipation struct {
