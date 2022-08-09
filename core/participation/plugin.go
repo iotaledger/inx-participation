@@ -10,8 +10,8 @@ import (
 	"github.com/pkg/errors"
 	"go.uber.org/dig"
 
-	"github.com/iotaledger/hive.go/app"
-	"github.com/iotaledger/hive.go/app/core/shutdown"
+	"github.com/iotaledger/hive.go/core/app"
+	"github.com/iotaledger/hive.go/core/app/core/shutdown"
 	"github.com/iotaledger/hornet/v2/pkg/database"
 	"github.com/iotaledger/inx-app/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/daemon"
