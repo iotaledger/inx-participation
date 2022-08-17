@@ -32,6 +32,10 @@ The participation extension is configured by default to connect to your HORNET i
 
 You can find all the configuration options in the [configuration section](configuration.md).
 
+## Dashboard
+
+If you are using the [INX-Dashboard](https://github.com/iotaledger/inx-dashboard) on your node, you can manage events directly from your browser.
+
 ## API
 
 The extension exposes a custom set of REST APIs that can be used by wallets and applications to find active, past and upcoming participation events and query event results.
