@@ -1,5 +1,5 @@
 ---
-description: Links to the Indexer REST API reference.
+description: Links to the Participation reference.
 image: /img/logo/HornetLogo.png
 keywords:
 - IOTA Node
