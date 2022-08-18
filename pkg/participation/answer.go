@@ -21,7 +21,7 @@ var (
 	ErrSerializationReservedValue = errors.New("reserved value used")
 )
 
-// Answer is a possible answer to a Ballot Question
+// Answer is a possible answer to a Ballot Question.
 type Answer struct {
 	// Value is the value that should be used to pick this answer. It must be unique for each answer in a given question. Reserved values are 0 and 255.
 	Value uint8
@@ -101,7 +101,7 @@ func (a *Answer) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
-// jsonAnswer defines the json representation of an Answer
+// jsonAnswer defines the json representation of an Answer.
 type jsonAnswer struct {
 	// Value is the value that should be used to pick this answer. It must be unique for each answer in a given question. Reserved values are 0 and 255.
 	Value uint8 `json:"value"`

@@ -164,7 +164,7 @@ func (j *jsonQuestion) ToSerializable() (serializer.Serializable, error) {
 	return payload, nil
 }
 
-// QuestionAnswers returns the possible answers for a Question
+// QuestionAnswers returns the possible answers for a Question.
 func (q *Question) QuestionAnswers() []*Answer {
 	answers := make([]*Answer, len(q.Answers))
 	for i := range q.Answers {
@@ -174,7 +174,7 @@ func (q *Question) QuestionAnswers() []*Answer {
 	return answers
 }
 
-// answerValueForByte checks if the given value is a valid answer and maps any other values to AnswerValueInvalid
+// answerValueForByte checks if the given value is a valid answer and maps any other values to AnswerValueInvalid.
 func (q *Question) answerValueForByte(byteValue byte) uint8 {
 	if byteValue == 0 {
 		return 0

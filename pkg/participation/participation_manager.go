@@ -151,7 +151,7 @@ func (pm *ParticipationManager) init() error {
 	return pm.participationStoreHealth.MarkCorrupted()
 }
 
-// CloseDatabase flushes the store and closes the underlying database
+// CloseDatabase flushes the store and closes the underlying database.
 func (pm *ParticipationManager) CloseDatabase() error {
 	var flushAndCloseError error
 
@@ -211,7 +211,7 @@ func (pm *ParticipationManager) eventsWithoutLocking() map[EventID]*Event {
 	return events
 }
 
-// Events returns all known events
+// Events returns all known events.
 func (pm *ParticipationManager) Events() map[EventID]*Event {
 	pm.RLock()
 	defer pm.RUnlock()
@@ -244,7 +244,7 @@ func (pm *ParticipationManager) EventsAcceptingParticipation(index iotago.Milest
 	})
 }
 
-// EventsCountingParticipation returns the events that are currently actively counting participation, i.e. in the holding period
+// EventsCountingParticipation returns the events that are currently actively counting participation, i.e. in the holding period.
 func (pm *ParticipationManager) EventsCountingParticipation(index iotago.MilestoneIndex) map[EventID]*Event {
 	return filterEvents(pm.Events(), index, func(e *Event, index iotago.MilestoneIndex) bool {
 		return e.IsCountingParticipation(index)
@@ -296,7 +296,7 @@ func (pm *ParticipationManager) StoreEvent(event *Event) (EventID, error) {
 	return eventID, err
 }
 
-// Event returns the event for the given eventID if it exists
+// Event returns the event for the given eventID if it exists.
 func (pm *ParticipationManager) Event(eventID EventID) *Event {
 	pm.RLock()
 	defer pm.RUnlock()
@@ -304,7 +304,7 @@ func (pm *ParticipationManager) Event(eventID EventID) *Event {
 	return pm.events[eventID]
 }
 
-// EventWithoutLocking returns the event for the given eventID if it exists
+// EventWithoutLocking returns the event for the given eventID if it exists.
 func (pm *ParticipationManager) EventWithoutLocking(eventID EventID) *Event {
 	return pm.events[eventID]
 }
@@ -598,7 +598,7 @@ func (pm *ParticipationManager) applySpentUTXOForEvents(index iotago.MilestoneIn
 	return mutations.Commit()
 }
 
-// applyNewConfirmedMilestoneIndexForEvents iterates over each counting ballot participation and applies the current vote balance for each question to the total vote balance
+// applyNewConfirmedMilestoneIndexForEvents iterates over each counting ballot participation and applies the current vote balance for each question to the total vote balance.
 func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index iotago.MilestoneIndex, events map[EventID]*Event) error {
 
 	mutations, err := pm.participationStore.Batched()

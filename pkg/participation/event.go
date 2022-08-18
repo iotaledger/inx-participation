@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	// import implementation
+	// import implementation.
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -68,7 +68,7 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	return seri, nil
 }
 
-// Event
+// Event.
 type Event struct {
 	// Name is the name of the event.
 	Name string

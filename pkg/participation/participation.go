@@ -18,7 +18,7 @@ var (
 	ErrParticipationTooManyAnswers = errors.New("participation contains more answers than what a ballot can hold")
 )
 
-// Participation holds the participation for an event and the optional answer to a ballot
+// Participation holds the participation for an event and the optional answer to a ballot.
 type Participation struct {
 	// EventID is the ID of the event the participation is made for.
 	EventID EventID

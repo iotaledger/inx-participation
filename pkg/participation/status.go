@@ -33,7 +33,7 @@ type StakingStatus struct {
 	Symbol string `json:"symbol"`
 }
 
-// EventStatus holds the status of the event
+// EventStatus holds the status of the event.
 type EventStatus struct {
 	// MilestoneIndex is the milestone index the status was calculated for.
 	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
