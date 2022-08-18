@@ -65,7 +65,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, ProtocolVersion, BelowMaxDepth, MinPoWScore, false)
 
-	//Add token supply to our local HDWallet
+	// Add token supply to our local HDWallet
 	genesisWallet.BookOutput(te.GenesisOutput)
 	if assertSteps {
 		te.AssertWalletBalance(genesisWallet, te.ProtocolParameters().TokenSupply)

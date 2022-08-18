@@ -103,7 +103,7 @@ func run() error {
 
 		startIndex := deps.ParticipationManager.LedgerIndex()
 		if startIndex > 0 {
-			startIndex = startIndex + 1
+			startIndex++
 		}
 
 		if err := LedgerUpdates(ctx, startIndex, 0, func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
