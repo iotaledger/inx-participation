@@ -179,9 +179,7 @@ func (j *jsonQuestion) ToSerializable() (serializer.Serializable, error) {
 // QuestionAnswers returns the possible answers for a Question.
 func (q *Question) QuestionAnswers() []*Answer {
 	answers := make([]*Answer, len(q.Answers))
-	for i := range q.Answers {
-		answers[i] = q.Answers[i]
-	}
+	copy(answers, q.Answers)
 
 	return answers
 }

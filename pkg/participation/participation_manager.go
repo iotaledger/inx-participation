@@ -770,9 +770,7 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 	}
 
 	votes := make([]*Participation, len(parsedVotes.Participations))
-	for i, vote := range parsedVotes.Participations {
-		votes[i] = vote
-	}
+	copy(votes, parsedVotes.Participations)
 
 	return votes, nil
 }
