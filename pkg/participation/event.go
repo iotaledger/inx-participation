@@ -366,6 +366,7 @@ func (e *Event) IsCountingParticipation(atIndex iotago.MilestoneIndex) bool {
 
 // BallotCanOverflow returns whether a Ballot event can overflow.
 func (e *Event) BallotCanOverflow(protoParas *iotago.ProtocolParameters) bool {
+	//nolint:ifshort // false positive
 	ballot := e.Ballot()
 	if ballot == nil {
 		return false

@@ -147,6 +147,7 @@ func (pm *Manager) EventStatus(eventID EventID, milestone ...iotago.MilestoneInd
 		status.Questions = append(status.Questions, questionStatus)
 	}
 
+	//nolint:ifshort // false positive
 	staking := event.Staking()
 	if staking != nil {
 		total, err := pm.totalStakingParticipationForEvent(eventID, index)

@@ -315,6 +315,7 @@ func (pm *Manager) DeleteEvent(eventID EventID) error {
 	pm.Lock()
 	defer pm.Unlock()
 
+	//nolint:ifshort // false positive
 	event := pm.events[eventID]
 	if event == nil {
 		return ErrEventNotFound

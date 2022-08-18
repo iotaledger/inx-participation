@@ -824,6 +824,7 @@ func (pm *Manager) ForEachAddressStakingParticipation(eventID EventID, msIndex i
 		return nil
 	}
 
+	//nolint:ifshort // false positive
 	staking := event.Staking()
 	if staking == nil {
 		return nil
