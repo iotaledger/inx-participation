@@ -140,6 +140,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				return nil, nil
 			}
 			defer cachedBlock.Release(true)
+
 			return &participation.ParticipationBlock{
 				BlockID: blockID,
 				Block:   cachedBlock.Block().Block(),
@@ -154,6 +155,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 			if output.OutputType() != iotago.OutputBasic {
 				return nil, nil
 			}
+
 			return &participation.ParticipationOutput{
 				BlockID:  output.BlockID(),
 				OutputID: outputID,
@@ -213,6 +215,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 				currentIndex++
 			}
+
 			return nil
 		},
 		participation.WithTagMessage(ParticipationTag),
@@ -386,8 +389,10 @@ func (env *ParticipationTestEnv) ActiveParticipationsForEvent(eventID participat
 	var votes []*participation.TrackedParticipation
 	env.ParticipationManager().ForEachActiveParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
+
 		return true
 	})
+
 	return votes
 }
 
@@ -395,8 +400,10 @@ func (env *ParticipationTestEnv) PastParticipationsForEvent(eventID participatio
 	var votes []*participation.TrackedParticipation
 	env.ParticipationManager().ForEachPastParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
+
 		return true
 	})
+
 	return votes
 }
 

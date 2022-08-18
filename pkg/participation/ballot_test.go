@@ -58,6 +58,7 @@ func TestBallot_Deserialize(t *testing.T) {
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.Equal(t, len(tt.data), bytesRead)
@@ -88,6 +89,7 @@ func TestBallot_Serialize(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.EqualValues(t, tt.target, data)

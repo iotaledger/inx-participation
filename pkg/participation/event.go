@@ -64,6 +64,7 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
+
 	return seri, nil
 }
 
@@ -128,6 +129,7 @@ func (e *Event) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 					return fmt.Errorf("%w: unable to deserialize event, payload cannot be empty", ErrPayloadEmpty)
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -147,6 +149,7 @@ func (e *Event) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 					return fmt.Errorf("%w: unable to serialize event, payload cannot be empty", ErrPayloadEmpty)
 				}
 			}
+
 			return nil
 		}).
 		WriteString(e.Name, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
@@ -199,6 +202,7 @@ func (e *Event) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*e = *seri.(*Event)
+
 	return nil
 }
 
@@ -213,6 +217,7 @@ func jsonPayloadSelector(ty int) (iotago.JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}
+
 	return obj, nil
 }
 
@@ -312,6 +317,7 @@ func (e *Event) Status(atIndex iotago.MilestoneIndex) string {
 	if e.IsAcceptingParticipation(atIndex) {
 		return "commencing"
 	}
+
 	return "ended"
 }
 

@@ -43,6 +43,7 @@ func (q Questions) ToSerializables() serializer.Serializables {
 	for i, x := range q {
 		seris[i] = x
 	}
+
 	return seris
 }
 
@@ -110,6 +111,7 @@ func (q *Ballot) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*q = *seri.(*Ballot)
+
 	return nil
 }
 

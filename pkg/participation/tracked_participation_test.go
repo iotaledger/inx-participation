@@ -16,17 +16,20 @@ import (
 func RandBlockID() iotago.BlockID {
 	blockID := iotago.BlockID{}
 	copy(blockID[:], tpkg.RandBytes(iotago.BlockIDLength))
+
 	return blockID
 }
 
 func RandOutputID() iotago.OutputID {
 	outputID := iotago.OutputID{}
 	copy(outputID[:], tpkg.RandBytes(iotago.OutputIDLength))
+
 	return outputID
 }
 
 func RandomTrackedParticipation() *participation.TrackedParticipation {
 	msIndex := iotago.MilestoneIndex(rand.Int31())
+
 	return &participation.TrackedParticipation{
 		EventID:    RandEventID(),
 		OutputID:   RandOutputID(),

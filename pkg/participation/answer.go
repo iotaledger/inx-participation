@@ -48,6 +48,7 @@ func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationM
 					return fmt.Errorf("%w: answer is using a reserved value %d", ErrSerializationReservedValue, a.Value)
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -61,6 +62,7 @@ func (a *Answer) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx 
 					return fmt.Errorf("%w: answer is using a reserved value %d", ErrSerializationReservedValue, a.Value)
 				}
 			}
+
 			return nil
 		}).
 		WriteNum(a.Value, func(err error) error {
@@ -81,6 +83,7 @@ func (a *Answer) MarshalJSON() ([]byte, error) {
 		Text:           a.Text,
 		AdditionalInfo: a.AdditionalInfo,
 	}
+
 	return json.Marshal(jAnswer)
 }
 
@@ -94,6 +97,7 @@ func (a *Answer) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*a = *seri.(*Answer)
+
 	return nil
 }
 
@@ -113,5 +117,6 @@ func (j *jsonAnswer) ToSerializable() (serializer.Serializable, error) {
 		Text:           j.Text,
 		AdditionalInfo: j.AdditionalInfo,
 	}
+
 	return payload, nil
 }

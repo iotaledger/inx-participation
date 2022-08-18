@@ -23,6 +23,7 @@ func participationOutputFromINXOutput(output *inx.LedgerOutput) *participation.P
 	}
 
 	unlockConditions := iotaOutput.UnlockConditionSet()
+
 	return &participation.ParticipationOutput{
 		BlockID:  output.UnwrapBlockID(),
 		OutputID: output.UnwrapOutputID(),
@@ -36,6 +37,7 @@ func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.Mil
 	if err != nil {
 		return 0, 0
 	}
+
 	return iotago.MilestoneIndex(status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex()), iotago.MilestoneIndex(status.GetTanglePruningIndex())
 }
 

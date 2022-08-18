@@ -29,12 +29,14 @@ func ledgerIndexKey() []byte {
 	m := marshalutil.New(12)
 	m.WriteByte(ParticipationStoreKeyPrefixStatus)
 	m.WriteBytes([]byte("ledgerIndex"))
+
 	return m.Bytes()
 }
 
 func (pm *ParticipationManager) storeLedgerIndex(index iotago.MilestoneIndex) error {
 	m := marshalutil.New(4)
 	m.WriteUint32(uint32(index))
+
 	return pm.participationStore.Set(ledgerIndexKey(), m.Bytes())
 }
 
@@ -44,10 +46,12 @@ func (pm *ParticipationManager) readLedgerIndex() (iotago.MilestoneIndex, error)
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
 			return 0, nil
 		}
+
 		return 0, err
 	}
 	m := marshalutil.New(v)
 	u, err := m.ReadUint32()
+
 	return iotago.MilestoneIndex(u), err
 }
 
@@ -57,6 +61,7 @@ func eventKeyForEventID(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixEvents) // 1 byte
 	m.WriteBytes(eventID[:])                       // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -77,6 +82,7 @@ func (pm *ParticipationManager) loadEvents() (map[EventID]*Event, error) {
 		}
 
 		events[eventID] = event
+
 		return true
 	}); err != nil {
 		return nil, err
@@ -118,6 +124,7 @@ func blockKeyForEventPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixBlocks) // 1 byte
 	m.WriteBytes(eventID[:])                       // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -125,6 +132,7 @@ func blockKeyForEventAndBlockID(eventID EventID, blockID iotago.BlockID) []byte 
 	m := marshalutil.New(65)
 	m.WriteBytes(blockKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteBytes(blockID[:])                      // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -159,6 +167,7 @@ func participationKeyForEventOutputsPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixTrackedOutputs) // 1 byte
 	m.WriteBytes(eventID[:])                               // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -166,6 +175,7 @@ func participationKeyForEventAndOutputID(eventID EventID, outputID iotago.Output
 	m := marshalutil.New(67)
 	m.WriteBytes(participationKeyForEventOutputsPrefix(eventID)) // 32 bytes
 	m.WriteBytes(outputID[:])                                    // 34 bytes
+
 	return m.Bytes()
 }
 
@@ -173,6 +183,7 @@ func participationKeyForEventSpentOutputsPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixTrackedSpentOutputs) // 1 byte
 	m.WriteBytes(eventID[:])                                    // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -180,6 +191,7 @@ func participationKeyForEventAndSpentOutputID(eventID EventID, outputID iotago.O
 	m := marshalutil.New(67)
 	m.WriteBytes(participationKeyForEventSpentOutputsPrefix(eventID)) // 33 bytes
 	m.WriteBytes(outputID[:])                                         // 34 bytes
+
 	return m.Bytes()
 }
 
@@ -187,6 +199,7 @@ func participationKeyForEventPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixTrackedOutputByAddress) // 1 byte
 	m.WriteBytes(eventID[:])                                       // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -194,6 +207,7 @@ func participationKeyForEventAndAddressPrefix(eventID EventID, addressBytes []by
 	m := marshalutil.New(66)
 	m.WriteBytes(participationKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteBytes(addressBytes)                            // 33 bytes
+
 	return m.Bytes()
 }
 
@@ -201,6 +215,7 @@ func participationKeyForEventAndAddressOutputID(eventID EventID, addressBytes []
 	m := marshalutil.New(100)
 	m.WriteBytes(participationKeyForEventAndAddressPrefix(eventID, addressBytes)) // 66 bytes
 	m.WriteBytes(outputID[:])                                                     // 34 bytes
+
 	return m.Bytes()
 }
 
@@ -233,6 +248,7 @@ func (pm *ParticipationManager) ParticipationsForAddressWithoutLocking(eventID E
 				return true
 			}
 			innerErr = err
+
 			return false
 		}
 		trackedParticipations = append(trackedParticipations, participation)
@@ -262,10 +278,12 @@ func (pm *ParticipationManager) ParticipationsForOutputID(outputID iotago.Output
 			if errors.Is(err, ErrUnknownParticipation) {
 				continue
 			}
+
 			return nil, err
 		}
 		trackedParticipations = append(trackedParticipations, participation)
 	}
+
 	return trackedParticipations, nil
 }
 
@@ -279,6 +297,7 @@ func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID E
 		if err != nil {
 			return nil, nil, err
 		}
+
 		return key, value, nil
 	}
 
@@ -291,6 +310,7 @@ func (pm *ParticipationManager) ParticipationForOutputIDWithoutLocking(eventID E
 		if err != nil {
 			return nil, nil, err
 		}
+
 		return key, value, nil
 	}
 
@@ -322,12 +342,15 @@ func (pm *ParticipationManager) ForEachActiveParticipation(eventID EventID, cons
 		participation, err := TrackedParticipationFromBytes(key, value)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
+
 		return consumer(participation)
 	}); err != nil {
 		return err
 	}
+
 	return innerErr
 }
 
@@ -341,12 +364,15 @@ func (pm *ParticipationManager) ForEachPastParticipation(eventID EventID, consum
 		participation, err := TrackedParticipationFromBytes(key, value)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
+
 		return consumer(participation)
 	}); err != nil {
 		return err
 	}
+
 	return innerErr
 }
 
@@ -356,6 +382,7 @@ func currentBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixBallotCurrentVoteBalanceForQuestionAndAnswer) // 1 byte
 	m.WriteBytes(eventID[:])                                                             // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -365,6 +392,7 @@ func currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone 
 	m.WriteUint32(uint32(milestone))                         // 4 bytes
 	m.WriteUint8(questionIndex)                              // 1 byte
 	m.WriteUint8(answerIndex)                                // 1 byte
+
 	return m.Bytes()
 }
 
@@ -372,6 +400,7 @@ func accumulatedBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixBallotAccululatedVoteBalanceForQuestionAndAnswer) // 1 byte
 	m.WriteBytes(eventID[:])                                                                 // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -381,6 +410,7 @@ func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milest
 	m.WriteUint32(uint32(milestone))                             // 4 bytes
 	m.WriteUint8(questionIndex)                                  // 1 byte
 	m.WriteUint8(answerIndex)                                    // 1 byte
+
 	return m.Bytes()
 }
 
@@ -413,6 +443,7 @@ func (pm *ParticipationManager) endParticipationAtMilestone(eventID EventID, out
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
 			return ErrUnknownParticipation
 		}
+
 		return err
 	}
 
@@ -439,6 +470,7 @@ func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID,
 		participation, err := TrackedParticipationFromBytes(key, value)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
 
@@ -447,12 +479,14 @@ func (pm *ParticipationManager) endAllParticipationsAtMilestone(eventID EventID,
 		// Delete the entry from the Outputs list
 		if err := mutations.Delete(key); err != nil {
 			innerErr = err
+
 			return false
 		}
 
 		// Add the entry to the Spent list
 		if err := mutations.Set(participationKeyForEventAndSpentOutputID(eventID, participation.OutputID), participation.ValueBytes()); err != nil {
 			innerErr = err
+
 			return false
 		}
 
@@ -478,6 +512,7 @@ func (pm *ParticipationManager) currentBallotVoteBalanceForQuestionAndAnswer(eve
 	}
 
 	ms := marshalutil.New(val)
+
 	return ms.ReadUint64()
 }
 
@@ -494,18 +529,21 @@ func (pm *ParticipationManager) accumulatedBallotVoteBalanceForQuestionAndAnswer
 	}
 
 	ms := marshalutil.New(val)
+
 	return ms.ReadUint64()
 }
 
 func setCurrentBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8, current uint64, mutations kvstore.BatchedMutations) error {
 	ms := marshalutil.New(8)
 	ms.WriteUint64(current)
+
 	return mutations.Set(currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx), ms.Bytes())
 }
 
 func setAccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIdx uint8, answerIdx uint8, total uint64, mutations kvstore.BatchedMutations) error {
 	ms := marshalutil.New(8)
 	ms.WriteUint64(total)
+
 	return mutations.Set(accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID, milestone, questionIdx, answerIdx), ms.Bytes())
 }
 
@@ -528,6 +566,7 @@ func (pm *ParticipationManager) startCountingBallotAnswers(event *Event, vote *P
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -554,6 +593,7 @@ func (pm *ParticipationManager) stopCountingBallotAnswers(event *Event, vote *Pa
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -604,6 +644,7 @@ func (pm *ParticipationManager) RewardsForTrackedParticipationWithoutLocking(tra
 
 	rewardsPerMilestone := staking.rewardsPerMilestone(trackedParticipation.Amount)
 	rewardsForParticipation := rewardsPerMilestone * milestonesToCount
+
 	return rewardsForParticipation, nil
 }
 
@@ -620,6 +661,7 @@ func (pm *ParticipationManager) StakingRewardForAddressWithoutLocking(eventID Ev
 		}
 		rewards += amount
 	}
+
 	return rewards, nil
 }
 
@@ -627,6 +669,7 @@ func currentRewardsKeyForEventPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixStakingCurrentRewards) // 1 byte
 	m.WriteBytes(eventID[:])                                      // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -634,6 +677,7 @@ func currentRewardsPerMilestoneKeyForEvent(eventID EventID, milestone iotago.Mil
 	m := marshalutil.New(37)
 	m.WriteBytes(currentRewardsKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                       // 4 bytes
+
 	return m.Bytes()
 }
 
@@ -641,6 +685,7 @@ func totalParticipationStakingKeyForEventPrefix(eventID EventID) []byte {
 	m := marshalutil.New(33)
 	m.WriteByte(ParticipationStoreKeyPrefixStakingTotalParticipation) // 1 byte
 	m.WriteBytes(eventID[:])                                          // 32 bytes
+
 	return m.Bytes()
 }
 
@@ -648,6 +693,7 @@ func totalParticipationStakingKeyForEvent(eventID EventID, milestone iotago.Mile
 	m := marshalutil.New(37)
 	m.WriteBytes(totalParticipationStakingKeyForEventPrefix(eventID)) // 33 bytes
 	m.WriteUint32(uint32(milestone))                                  // 4 bytes
+
 	return m.Bytes()
 }
 
@@ -677,6 +723,7 @@ func (t *totalStakingParticipation) valueBytes() []byte {
 	m := marshalutil.New(16)
 	m.WriteUint64(t.staked)   // 8 bytes
 	m.WriteUint64(t.rewarded) // 8 bytes
+
 	return m.Bytes()
 }
 
@@ -686,9 +733,11 @@ func (pm *ParticipationManager) currentRewardsPerMilestoneForStakingEvent(eventI
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
 			return 0, nil
 		}
+
 		return 0, err
 	}
 	m := marshalutil.New(value)
+
 	return m.ReadUint64()
 }
 
@@ -698,6 +747,7 @@ func (pm *ParticipationManager) increaseCurrentRewardsPerMilestoneForStakingEven
 		return err
 	}
 	current += rewards
+
 	return pm.setCurrentRewardsPerMilestoneForStakingEvent(eventID, milestone, current, mutations)
 }
 
@@ -710,12 +760,14 @@ func (pm *ParticipationManager) decreaseCurrentRewardsPerMilestoneForStakingEven
 		return ErrInvalidCurrentRewardsAmount
 	}
 	current -= rewards
+
 	return pm.setCurrentRewardsPerMilestoneForStakingEvent(eventID, milestone, current, mutations)
 }
 
 func (pm *ParticipationManager) setCurrentRewardsPerMilestoneForStakingEvent(eventID EventID, milestone iotago.MilestoneIndex, rewards uint64, mutations kvstore.BatchedMutations) error {
 	m := marshalutil.New(8)
 	m.WriteUint64(rewards)
+
 	return mutations.Set(currentRewardsPerMilestoneKeyForEvent(eventID, milestone), m.Bytes())
 }
 
@@ -725,8 +777,10 @@ func (pm *ParticipationManager) totalStakingParticipationForEvent(eventID EventI
 		if errors.Is(err, kvstore.ErrKeyNotFound) {
 			return &totalStakingParticipation{staked: 0, rewarded: 0}, nil
 		}
+
 		return nil, err
 	}
+
 	return totalStakingParticipationFromBytes(value)
 }
 
@@ -736,6 +790,7 @@ func (pm *ParticipationManager) increaseStakedAmountForStakingEvent(eventID Even
 		return err
 	}
 	total.staked += stakedAmount
+
 	return mutations.Set(totalParticipationStakingKeyForEvent(eventID, milestone), total.valueBytes())
 }
 
@@ -748,6 +803,7 @@ func (pm *ParticipationManager) decreaseStakedAmountForStakingEvent(eventID Even
 		return ErrInvalidCurrentStakedAmount
 	}
 	total.staked -= stakedAmount
+
 	return mutations.Set(totalParticipationStakingKeyForEvent(eventID, milestone), total.valueBytes())
 }
 
@@ -781,12 +837,14 @@ func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID Event
 		addr, err := iotago.AddressSelector(uint32(addressBytes[0]))
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
 
 		addrLen, err := addr.Deserialize(addressBytes, serializer.DeSeriModeNoValidation, nil)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
 
@@ -796,12 +854,14 @@ func (pm *ParticipationManager) ForEachAddressStakingParticipation(eventID Event
 		participation, err := pm.ParticipationForOutputIDWithoutLocking(eventID, outputID)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
 
 		balance, err := pm.RewardsForTrackedParticipationWithoutLocking(participation, msIndex)
 		if err != nil {
 			innerErr = err
+
 			return false
 		}
 
@@ -845,5 +905,6 @@ func (pm *ParticipationManager) clearStorageForEventID(eventID EventID) error {
 	if err := pm.participationStore.DeletePrefix([]byte{ParticipationStoreKeyPrefixStakingAddress}); err != nil {
 		return err
 	}
+
 	return nil
 }

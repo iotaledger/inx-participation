@@ -46,6 +46,7 @@ func (a Answers) ToSerializables() serializer.Serializables {
 	for i, x := range a {
 		seris[i] = x
 	}
+
 	return seris
 }
 
@@ -123,6 +124,7 @@ func (q *Question) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*q = *seri.(*Question)
+
 	return nil
 }
 
@@ -168,6 +170,7 @@ func (q *Question) QuestionAnswers() []*Answer {
 	for i := range q.Answers {
 		answers[i] = q.Answers[i]
 	}
+
 	return answers
 }
 
@@ -182,5 +185,6 @@ func (q *Question) answerValueForByte(byteValue byte) uint8 {
 			return a.Value
 		}
 	}
+
 	return AnswerValueInvalid
 }

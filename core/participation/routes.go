@@ -85,6 +85,7 @@ func setupRoutes(e *echo.Echo) {
 		}
 
 		c.Response().Header().Set(echo.HeaderLocation, resp.EventID)
+
 		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})
 
@@ -101,6 +102,7 @@ func setupRoutes(e *echo.Echo) {
 		if err := deleteEvent(c); err != nil {
 			return err
 		}
+
 		return c.NoContent(http.StatusNoContent)
 	})
 
@@ -118,6 +120,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -126,6 +129,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -134,6 +138,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -142,6 +147,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -150,6 +156,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -158,6 +165,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 }

@@ -72,6 +72,7 @@ func (s *Staking) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 					return fmt.Errorf("%w: symbol length invalid. Min %d Max %d", serializer.ErrDeserializationLengthInvalid, StakingSymbolMinLength, StakingSymbolMaxLength)
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -89,6 +90,7 @@ func (s *Staking) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx
 					return fmt.Errorf("%w: symbol length invalid. Min %d Max %d", ErrSerializationStringLengthInvalid, StakingSymbolMinLength, StakingSymbolMaxLength)
 				}
 			}
+
 			return nil
 		}).
 		WriteNum(StakingPayloadTypeID, func(err error) error {
@@ -125,6 +127,7 @@ func (s *Staking) MarshalJSON() ([]byte, error) {
 		RequiredMinimumRewards: s.RequiredMinimumRewards,
 		AdditionalInfo:         s.AdditionalInfo,
 	}
+
 	return json.Marshal(j)
 }
 
@@ -140,6 +143,7 @@ func (s *Staking) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*s = *seri.(*Staking)
+
 	return nil
 }
 
@@ -170,5 +174,6 @@ func (j *jsonStaking) ToSerializable() (serializer.Serializable, error) {
 		RequiredMinimumRewards: j.RequiredMinimumRewards,
 		AdditionalInfo:         j.AdditionalInfo,
 	}
+
 	return payload, nil
 }

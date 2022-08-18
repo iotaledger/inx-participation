@@ -59,6 +59,7 @@ func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex .
 			MinimumReached: amount >= staking.RequiredMinimumRewards,
 		}
 	}
+
 	return addrRewards, nil
 }
 
@@ -108,6 +109,7 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.
 			addresses = append(addresses, addr)
 		}
 		rewardsByAddress[addr] += rewards
+
 		return true
 	}); err != nil {
 		return nil, err
@@ -138,5 +140,6 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.
 	}
 
 	eventRewards.Checksum = iotago.EncodeHex(responseHash.Sum(nil))
+
 	return eventRewards, nil
 }

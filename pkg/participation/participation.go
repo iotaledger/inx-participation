@@ -40,6 +40,7 @@ func (p *Participation) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 					return ErrParticipationTooManyAnswers
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -53,6 +54,7 @@ func (p *Participation) Serialize(deSeriMode serializer.DeSerializationMode, deS
 					return ErrParticipationTooManyAnswers
 				}
 			}
+
 			return nil
 		}).
 		WriteBytes(p.EventID[:], func(err error) error {
@@ -69,6 +71,7 @@ func (p *Participation) MarshalJSON() ([]byte, error) {
 		EventID: p.EventID.ToHex(),
 		Answers: iotago.EncodeHex(p.Answers),
 	}
+
 	return json.Marshal(j)
 }
 
@@ -82,6 +85,7 @@ func (p *Participation) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*p = *seri.(*Participation)
+
 	return nil
 }
 

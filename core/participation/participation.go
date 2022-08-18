@@ -29,6 +29,7 @@ func EventIDFromHex(hexString string) (participation.EventID, error) {
 
 	var eventID participation.EventID
 	copy(eventID[:], b)
+
 	return eventID, nil
 }
 
@@ -54,6 +55,7 @@ func parseEventTypeQueryParam(c echo.Context) ([]uint32, error) {
 		}
 		returnTypes = append(returnTypes, eventType)
 	}
+
 	return returnTypes, nil
 }
 
@@ -136,6 +138,7 @@ func deleteEvent(c echo.Context) error {
 		if errors.Is(err, participation.ErrEventNotFound) {
 			return errors.WithMessagef(echo.ErrNotFound, "event not found: %s", eventID.ToHex())
 		}
+
 		return errors.WithMessagef(echo.ErrInternalServerError, "deleting event failed: %s", err)
 	}
 
@@ -152,6 +155,7 @@ func parseMilestoneIndexQueryParam(c echo.Context) (iotago.MilestoneIndex, error
 	if err != nil {
 		return 0, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid milestone index: %s, error: %s", milestoneIndexParam, err)
 	}
+
 	return iotago.MilestoneIndex(intParam), nil
 }
 
@@ -176,8 +180,10 @@ func getEventStatus(c echo.Context) (*participation.EventStatus, error) {
 		if errors.Is(err, participation.ErrEventNotFound) {
 			return nil, errors.WithMessagef(echo.ErrNotFound, "event not found: %s", eventID.ToHex())
 		}
+
 		return nil, errors.WithMessagef(echo.ErrInternalServerError, "get event status failed: %s", err)
 	}
+
 	return status, nil
 }
 
@@ -242,6 +248,7 @@ func getRewardsByAddress(c echo.Context) (*participation.AddressRewards, error) 
 	if milestoneIndex > 0 {
 		return deps.ParticipationManager.AddressRewards(bech32Address, milestoneIndex)
 	}
+
 	return deps.ParticipationManager.AddressRewards(bech32Address)
 }
 
@@ -300,6 +307,7 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 			outputResponse.Participations[trackedParticipation.EventID.ToHex()] = t
 		}
 	}
+
 	return response, nil
 }
 
@@ -320,10 +328,12 @@ func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
 		}
 		response.Participations[trackedParticipation.OutputID.ToHex()] = t
+
 		return true
 	}); err != nil {
 		return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching active participations: %s", err)
 	}
+
 	return response, nil
 }
 
@@ -344,9 +354,11 @@ func getPastParticipations(c echo.Context) (*ParticipationsResponse, error) {
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
 		}
 		response.Participations[trackedParticipation.OutputID.ToHex()] = t
+
 		return true
 	}); err != nil {
 		return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching past participations: %s", err)
 	}
+
 	return response, nil
 }

@@ -37,9 +37,11 @@ func (rb *EventBuilder) Payload(seri serializer.Serializable) *EventBuilder {
 	case nil:
 	default:
 		rb.err = fmt.Errorf("%w: unsupported type %T", ErrUnknownPayloadType, seri)
+
 		return rb
 	}
 	rb.event.Payload = seri
+
 	return rb
 }
 
@@ -52,5 +54,6 @@ func (rb *EventBuilder) Build() (*Event, error) {
 	if _, err := rb.event.Serialize(serializer.DeSeriModePerformValidation, nil); err != nil {
 		return nil, fmt.Errorf("unable to build participation: %w", err)
 	}
+
 	return rb.event, nil
 }

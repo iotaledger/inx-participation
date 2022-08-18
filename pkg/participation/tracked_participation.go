@@ -28,6 +28,7 @@ func parseEventID(ms *marshalutil.MarshalUtil) (EventID, error) {
 	}
 	o := EventID{}
 	copy(o[:], bytes)
+
 	return o, nil
 }
 
@@ -38,6 +39,7 @@ func parseOutputID(ms *marshalutil.MarshalUtil) (iotago.OutputID, error) {
 		return o, err
 	}
 	copy(o[:], bytes)
+
 	return o, nil
 }
 
@@ -48,6 +50,7 @@ func parseBlockID(ms *marshalutil.MarshalUtil) (iotago.BlockID, error) {
 	}
 	blockID := iotago.BlockID{}
 	copy(blockID[:], bytes)
+
 	return blockID, nil
 }
 
@@ -118,5 +121,6 @@ func (t *TrackedParticipation) ValueBytes() []byte {
 	m.WriteUint64(t.Amount)             // 8 bytes
 	m.WriteUint32(uint32(t.StartIndex)) // 4 bytes
 	m.WriteUint32(uint32(t.EndIndex))   // 4 bytes
+
 	return m.Bytes()
 }

@@ -43,6 +43,7 @@ func (s Participations) ToSerializables() serializer.Serializables {
 	for i, x := range s {
 		seris[i] = x
 	}
+
 	return seris
 }
 
@@ -101,6 +102,7 @@ func (p *ParticipationPayload) UnmarshalJSON(bytes []byte) error {
 		return err
 	}
 	*p = *seri.(*ParticipationPayload)
+
 	return nil
 }
 

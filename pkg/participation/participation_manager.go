@@ -165,6 +165,7 @@ func (pm *ParticipationManager) CloseDatabase() error {
 	if err := pm.participationStore.Close(); err != nil {
 		flushAndCloseError = err
 	}
+
 	return flushAndCloseError
 }
 
@@ -175,6 +176,7 @@ func (pm *ParticipationManager) LedgerIndex() iotago.MilestoneIndex {
 	if err != nil {
 		panic(err)
 	}
+
 	return index
 }
 
@@ -188,6 +190,7 @@ func (pm *ParticipationManager) eventIDsWithoutLocking(eventPayloadType ...uint3
 	for id := range events {
 		ids = append(ids, id)
 	}
+
 	return ids
 }
 
@@ -195,6 +198,7 @@ func (pm *ParticipationManager) eventIDsWithoutLocking(eventPayloadType ...uint3
 func (pm *ParticipationManager) EventIDs(eventPayloadType ...uint32) []EventID {
 	pm.RLock()
 	defer pm.RUnlock()
+
 	return pm.eventIDsWithoutLocking(eventPayloadType...)
 }
 
@@ -203,6 +207,7 @@ func (pm *ParticipationManager) eventsWithoutLocking() map[EventID]*Event {
 	for id, e := range pm.events {
 		events[id] = e
 	}
+
 	return events
 }
 
@@ -210,6 +215,7 @@ func (pm *ParticipationManager) eventsWithoutLocking() map[EventID]*Event {
 func (pm *ParticipationManager) Events() map[EventID]*Event {
 	pm.RLock()
 	defer pm.RUnlock()
+
 	return pm.eventsWithoutLocking()
 }
 
@@ -223,9 +229,11 @@ eventLoop:
 			if payloadType == eventPayloadType {
 				filtered[id] = event
 			}
+
 			continue eventLoop
 		}
 	}
+
 	return filtered
 }
 
@@ -292,6 +300,7 @@ func (pm *ParticipationManager) StoreEvent(event *Event) (EventID, error) {
 func (pm *ParticipationManager) Event(eventID EventID) *Event {
 	pm.RLock()
 	defer pm.RUnlock()
+
 	return pm.events[eventID]
 }
 
@@ -319,6 +328,7 @@ func (pm *ParticipationManager) DeleteEvent(eventID EventID) error {
 	}
 
 	delete(pm.events, eventID)
+
 	return nil
 }
 
@@ -363,11 +373,13 @@ func (pm *ParticipationManager) calculatePastParticipationForEvent(event *Event)
 		if err := pm.applyNewConfirmedMilestoneIndexForEvents(index, events); err != nil {
 			return err
 		}
+
 		return nil
 	})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -403,6 +415,7 @@ func (pm *ParticipationManager) ApplyNewLedgerUpdate(index iotago.MilestoneIndex
 	if err := pm.applyNewConfirmedMilestoneIndexForEvents(index, acceptingEvents); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -447,18 +460,21 @@ func (pm *ParticipationManager) applyNewUTXOForEvents(index iotago.MilestoneInde
 		// Store the block holding the participation for this event
 		if err := pm.storeBlockForEvent(participation.EventID, block, mutations); err != nil {
 			mutations.Cancel()
+
 			return err
 		}
 
 		// Store the participation started at this milestone
 		if err := pm.startParticipationAtMilestone(participation.EventID, depositOutput, index, mutations); err != nil {
 			mutations.Cancel()
+
 			return err
 		}
 
 		event, ok := events[participation.EventID]
 		if !ok {
 			mutations.Cancel()
+
 			return nil
 		}
 
@@ -467,17 +483,20 @@ func (pm *ParticipationManager) applyNewUTXOForEvents(index iotago.MilestoneInde
 			// Count the new ballot votes by increasing the current vote balance
 			if err := pm.startCountingBallotAnswers(event, participation, index, depositOutput.Deposit, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 		case *Staking:
 			// Increase the staked amount
 			if err := pm.increaseStakedAmountForStakingEvent(participation.EventID, index, depositOutput.Deposit, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 			// Increase the staking rewards
 			if err := pm.increaseCurrentRewardsPerMilestoneForStakingEvent(participation.EventID, index, payload.rewardsPerMilestone(depositOutput.Deposit), mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 		}
@@ -499,6 +518,7 @@ func (pm *ParticipationManager) applySpentUTXOForEvents(index iotago.MilestoneIn
 		}
 		if blockForEvent != nil {
 			msg = blockForEvent
+
 			break
 		}
 	}
@@ -540,12 +560,14 @@ func (pm *ParticipationManager) applySpentUTXOForEvents(index iotago.MilestoneIn
 				continue
 			}
 			mutations.Cancel()
+
 			return err
 		}
 
 		event, ok := events[participation.EventID]
 		if !ok {
 			mutations.Cancel()
+
 			return nil
 		}
 
@@ -554,17 +576,20 @@ func (pm *ParticipationManager) applySpentUTXOForEvents(index iotago.MilestoneIn
 			// Count the spent votes by decreasing the current vote balance
 			if err := pm.stopCountingBallotAnswers(event, participation, index, spent.Deposit, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 		case *Staking:
 			// Decrease the staked amount
 			if err := pm.decreaseStakedAmountForStakingEvent(participation.EventID, index, spent.Deposit, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 			// Decrease the staking rewards
 			if err := pm.decreaseCurrentRewardsPerMilestoneForStakingEvent(participation.EventID, index, payload.rewardsPerMilestone(spent.Deposit), mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 		}
@@ -592,6 +617,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 			currentBalance, err := pm.currentBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue)
 			if err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 
@@ -599,6 +625,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 				// Event not ended yet, so copy the current for the next milestone already
 				if err := setCurrentBallotVoteBalanceForQuestionAndAnswer(eventID, index+1, questionIndex, answerValue, currentBalance, mutations); err != nil {
 					mutations.Cancel()
+
 					return err
 				}
 			}
@@ -607,6 +634,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 				accumulatedBalance, err := pm.accumulatedBallotVoteBalanceForQuestionAndAnswer(eventID, index-1, questionIndex, answerValue)
 				if err != nil {
 					mutations.Cancel()
+
 					return err
 				}
 
@@ -615,6 +643,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 
 				if err := setAccumulatedBallotVoteBalanceForQuestionAndAnswer(eventID, index, questionIndex, answerValue, newAccumulatedBalance, mutations); err != nil {
 					mutations.Cancel()
+
 					return err
 				}
 			}
@@ -646,6 +675,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 			currentRewardsPerMilestone, err := pm.currentRewardsPerMilestoneForStakingEvent(eventID, index)
 			if err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 
@@ -653,6 +683,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 				// Event not ended yet, so copy the current rewards for the next milestone already
 				if err := pm.setCurrentRewardsPerMilestoneForStakingEvent(eventID, index+1, currentRewardsPerMilestone, mutations); err != nil {
 					mutations.Cancel()
+
 					return err
 				}
 			}
@@ -660,6 +691,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 			total, err := pm.totalStakingParticipationForEvent(eventID, index)
 			if err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 
@@ -669,6 +701,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 
 			if err := pm.setTotalStakingParticipationForEvent(eventID, index, total, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 
@@ -676,6 +709,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 				// Event not ended yet, so copy the current total for the next milestone already
 				if err := pm.setTotalStakingParticipationForEvent(eventID, index+1, total, mutations); err != nil {
 					mutations.Cancel()
+
 					return err
 				}
 			}
@@ -685,6 +719,7 @@ func (pm *ParticipationManager) applyNewConfirmedMilestoneIndexForEvents(index i
 		if event.EndMilestoneIndex() == index {
 			if err := pm.endAllParticipationsAtMilestone(eventID, index+1, mutations); err != nil {
 				mutations.Cancel()
+
 				return err
 			}
 		}
@@ -742,6 +777,7 @@ func serializedAddressFromOutput(output *iotago.BasicOutput) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return outputAddress, nil
 }
 
@@ -809,6 +845,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 
 		if bytes.Equal(outputAddress, inputAddress) {
 			containsInputFromSameAddress = true
+
 			break
 		}
 	}
@@ -845,5 +882,6 @@ func filterEvents(events map[EventID]*Event, index iotago.MilestoneIndex, includ
 			filtered[id] = event
 		}
 	}
+
 	return filtered
 }

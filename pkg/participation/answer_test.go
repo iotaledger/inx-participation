@@ -14,6 +14,7 @@ import (
 
 func RandValidAnswer() (*participation.Answer, []byte) {
 	value := uint8(1 + rand.Intn(254)) // Value between 1 and 254
+
 	return RandAnswer(value, participation.AnswerTextMaxLength, participation.AnswerAdditionalInfoMaxLength)
 }
 
@@ -58,6 +59,7 @@ func TestAnswer_Deserialize(t *testing.T) {
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.Equal(t, len(tt.data), bytesRead)
@@ -90,6 +92,7 @@ func TestAnswer_Serialize(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.EqualValues(t, tt.target, data)

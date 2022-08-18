@@ -113,6 +113,7 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 			if err := binary.Write(statusHash, binary.LittleEndian, accumulatedBalance); err != nil {
 				return nil, err
 			}
+
 			return &AnswerStatus{
 				Value:       answerValue,
 				Current:     currentBalance,
@@ -168,6 +169,7 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 	}
 
 	status.Checksum = iotago.EncodeHex(statusHash.Sum(nil))
+
 	return status, nil
 }
 
@@ -177,5 +179,6 @@ func (q *QuestionStatus) StatusForAnswerValue(answerValue uint8) *AnswerStatus {
 			return a
 		}
 	}
+
 	return nil
 }

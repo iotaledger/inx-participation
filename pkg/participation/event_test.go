@@ -26,12 +26,14 @@ func RandString(strLen int) string {
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
+
 	return string(b)
 }
 
 func RandEventID() participation.EventID {
 	eventID := participation.EventID{}
 	copy(eventID[:], tpkg.RandBytes(participation.EventIDLength))
+
 	return eventID
 }
 
@@ -45,6 +47,7 @@ func RandEventWithBallot(nameLen int, additionalInfoLen int) (*participation.Eve
 	end := start + uint32(rand.Intn(1000))
 
 	ballot, _ := RandBallot(1 + rand.Intn(participation.BallotMaxQuestionsCount-1))
+
 	return RandEvent(nameLen, additionalInfoLen, commence, start, end, ballot)
 }
 
@@ -58,6 +61,7 @@ func RandEventWithStaking(nameLen int, additionalInfoLen int) (*participation.Ev
 	end := start + uint32(rand.Intn(1000))
 
 	staking, _ := RandStaking(participation.StakingTextMaxLength, participation.StakingSymbolMaxLength, uint32(1+rand.Intn(10000)), uint32(1+rand.Intn(10000)), participation.StakingAdditionalInfoMaxLength)
+
 	return RandEvent(nameLen, additionalInfoLen, commence, start, end, staking)
 }
 
@@ -125,6 +129,7 @@ func TestEvent_Deserialize(t *testing.T) {
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.Equal(t, len(tt.data), bytesRead)
@@ -161,6 +166,7 @@ func TestEvent_Serialize(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.EqualValues(t, tt.target, data)
@@ -171,6 +177,7 @@ func TestEvent_Serialize(t *testing.T) {
 func RandBallotEventWithIndexes(commence uint32, start uint32, end uint32) *participation.Event {
 	ballot, _ := RandBallot(1 + rand.Intn(participation.BallotMaxQuestionsCount-1))
 	event, _ := RandEvent(participation.EventNameMaxLength, participation.EventAdditionalInfoMaxLength, commence, start, end, ballot)
+
 	return event
 }
 
@@ -195,6 +202,7 @@ func RandStakingEvent(nominator uint32, denominator uint32, duration uint32) *pa
 	if err != nil {
 		panic(err)
 	}
+
 	return event
 }
 

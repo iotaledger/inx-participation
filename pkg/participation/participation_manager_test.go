@@ -1228,6 +1228,7 @@ func TestStakingRewards(t *testing.T) {
 	env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
 		totalRewards += rewards
 		addresses[address.String()] += rewards
+
 		return true
 	})
 
@@ -1252,6 +1253,7 @@ func TestStakingRewards(t *testing.T) {
 	totalRewardsWithoutFilter := uint64(0)
 	env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
 		totalRewardsWithoutFilter += rewards
+
 		return true
 	})
 	require.Exactly(t, totalRewardsWithoutFilter, uint64(6_250_000+1_984_410+6_987_470+75_000_000))
