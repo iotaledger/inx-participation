@@ -50,7 +50,7 @@ type ParticipationTestEnv struct {
 	Wallet4       *utils.HDWallet
 
 	participationStore kvstore.KVStore
-	rm                 *participation.ParticipationManager
+	rm                 *participation.Manager
 }
 
 func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance uint64, wallet3Balance uint64, wallet4Balance uint64, assertSteps bool) *ParticipationTestEnv {
@@ -275,7 +275,7 @@ func (env *ParticipationTestEnv) ProtocolParameters() *iotago.ProtocolParameters
 	return env.te.ProtocolParameters()
 }
 
-func (env *ParticipationTestEnv) ParticipationManager() *participation.ParticipationManager {
+func (env *ParticipationTestEnv) ParticipationManager() *participation.Manager {
 	return env.rm
 }
 

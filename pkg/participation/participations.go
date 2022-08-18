@@ -55,6 +55,8 @@ func (s *Participations) FromSerializables(seris serializer.Serializables) {
 }
 
 // ParticipationPayload holds the participation for multiple events.
+//
+//nolint:revive // better be explicit here
 type ParticipationPayload struct {
 	// Participations holds the participation for multiple events.
 	Participations Participations

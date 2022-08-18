@@ -5,12 +5,14 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
+//nolint:revive // better be explicit here
 type ParticipationBlock struct {
 	BlockID iotago.BlockID
 	Block   *iotago.Block
 	Data    []byte
 }
 
+//nolint:revive // better be explicit here
 type ParticipationOutput struct {
 	BlockID  iotago.BlockID
 	OutputID iotago.OutputID

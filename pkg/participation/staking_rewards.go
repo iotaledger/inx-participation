@@ -26,7 +26,7 @@ type AddressRewards struct {
 	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 }
 
-func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex ...iotago.MilestoneIndex) (*AddressRewards, error) {
+func (pm *Manager) AddressRewards(address iotago.Address, msIndex ...iotago.MilestoneIndex) (*AddressRewards, error) {
 	pm.RLock()
 	defer pm.RUnlock()
 
@@ -77,7 +77,7 @@ type EventRewards struct {
 	Rewards map[string]uint64 `json:"rewards"`
 }
 
-func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneIndex) (*EventRewards, error) {
+func (pm *Manager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneIndex) (*EventRewards, error) {
 	protoParas := pm.protocolParametersFunc()
 
 	pm.RLock()

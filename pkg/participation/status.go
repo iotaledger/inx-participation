@@ -48,7 +48,7 @@ type EventStatus struct {
 }
 
 // EventStatus returns the EventStatus for an event with the given eventID.
-func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago.MilestoneIndex) (*EventStatus, error) {
+func (pm *Manager) EventStatus(eventID EventID, milestone ...iotago.MilestoneIndex) (*EventStatus, error) {
 	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
 	pm.RLock()
 	defer pm.RUnlock()

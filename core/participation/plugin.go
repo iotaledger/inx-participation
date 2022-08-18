@@ -39,7 +39,7 @@ var (
 
 type dependencies struct {
 	dig.In
-	ParticipationManager *participation.ParticipationManager
+	ParticipationManager *participation.Manager
 	NodeBridge           *nodebridge.NodeBridge
 	ShutdownHandler      *shutdown.ShutdownHandler
 }
@@ -51,7 +51,7 @@ func provide(c *dig.Container) error {
 		NodeBridge *nodebridge.NodeBridge
 	}
 
-	return c.Provide(func(deps participationDeps) *participation.ParticipationManager {
+	return c.Provide(func(deps participationDeps) *participation.Manager {
 
 		dbEngine, err := database.DatabaseEngineFromStringAllowed(ParamsParticipation.Database.Engine)
 		if err != nil {

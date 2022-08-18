@@ -186,8 +186,8 @@ func (e *Event) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawMsgJsonPayload := json.RawMessage(jsonPayload)
-	j.Payload = &rawMsgJsonPayload
+	rawMsgJSONPayload := json.RawMessage(jsonPayload)
+	j.Payload = &rawMsgJSONPayload
 
 	return json.Marshal(j)
 }
