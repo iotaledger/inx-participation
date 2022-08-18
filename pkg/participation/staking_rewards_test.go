@@ -1,3 +1,4 @@
+//nolint:dupl // we don't care about these linters in test cases
 package participation_test
 
 import (
@@ -6,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/inx-participation/pkg/participation"
-	"github.com/iotaledger/inx-participation/pkg/participation/test"
+	test "github.com/iotaledger/inx-participation/pkg/participation/test"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 

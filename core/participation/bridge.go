@@ -23,6 +23,7 @@ func participationOutputFromINXOutput(output *inx.LedgerOutput) *participation.P
 	}
 
 	unlockConditions := iotaOutput.UnlockConditionSet()
+
 	return &participation.ParticipationOutput{
 		BlockID:  output.UnwrapBlockID(),
 		OutputID: output.UnwrapOutputID(),
@@ -36,7 +37,8 @@ func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.Mil
 	if err != nil {
 		return 0, 0
 	}
-	return iotago.MilestoneIndex(status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex()), iotago.MilestoneIndex(status.GetTanglePruningIndex())
+
+	return status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex(), status.GetTanglePruningIndex()
 }
 
 func BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
@@ -63,10 +65,15 @@ func OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOu
 		return nil, err
 	}
 	switch resp.GetPayload().(type) {
+
+	//nolint:nosnakecase // grpc uses underscores
 	case *inx.OutputResponse_Output:
 		return participationOutputFromINXOutput(resp.GetOutput()), nil
+
+	//nolint:nosnakecase // grpc uses underscores
 	case *inx.OutputResponse_Spent:
 		return participationOutputFromINXOutput(resp.GetSpent().GetOutput()), nil
+
 	default:
 		return nil, fmt.Errorf("invalid inx.OutputResponse payload type")
 	}

@@ -1,3 +1,4 @@
+//nolint:gosec // we don't care about these linters in test cases
 package participation_test
 
 import (
@@ -16,17 +17,20 @@ import (
 func RandBlockID() iotago.BlockID {
 	blockID := iotago.BlockID{}
 	copy(blockID[:], tpkg.RandBytes(iotago.BlockIDLength))
+
 	return blockID
 }
 
 func RandOutputID() iotago.OutputID {
 	outputID := iotago.OutputID{}
 	copy(outputID[:], tpkg.RandBytes(iotago.OutputIDLength))
+
 	return outputID
 }
 
 func RandomTrackedParticipation() *participation.TrackedParticipation {
 	msIndex := iotago.MilestoneIndex(rand.Int31())
+
 	return &participation.TrackedParticipation{
 		EventID:    RandEventID(),
 		OutputID:   RandOutputID(),
@@ -51,11 +55,11 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 
 	startIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.StartIndex, iotago.MilestoneIndex(startIndex))
+	require.Exactly(t, p.StartIndex, startIndex)
 
 	endIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.EndIndex, iotago.MilestoneIndex(endIndex))
+	require.Exactly(t, p.EndIndex, endIndex)
 
 	require.Equal(t, 48, ms.ReadOffset())
 }
@@ -79,8 +83,8 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	ms = marshalutil.New(48)
 	ms.WriteBytes(blockID[:])
 	ms.WriteUint64(amount)
-	ms.WriteUint32(uint32(startIndex))
-	ms.WriteUint32(uint32(endIndex))
+	ms.WriteUint32(startIndex)
+	ms.WriteUint32(endIndex)
 
 	value := ms.Bytes()
 	require.Equal(t, 48, len(value))

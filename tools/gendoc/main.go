@@ -6,7 +6,6 @@ import (
 
 	"github.com/iotaledger/hive.go/apputils/config"
 	"github.com/iotaledger/hive.go/core/app"
-
 	participationApp "github.com/iotaledger/inx-participation/core/app"
 )
 

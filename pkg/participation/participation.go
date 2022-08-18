@@ -18,7 +18,7 @@ var (
 	ErrParticipationTooManyAnswers = errors.New("participation contains more answers than what a ballot can hold")
 )
 
-// Participation holds the participation for an event and the optional answer to a ballot
+// Participation holds the participation for an event and the optional answer to a ballot.
 type Participation struct {
 	// EventID is the ID of the event the participation is made for.
 	EventID EventID
@@ -40,6 +40,7 @@ func (p *Participation) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 					return ErrParticipationTooManyAnswers
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -53,6 +54,7 @@ func (p *Participation) Serialize(deSeriMode serializer.DeSerializationMode, deS
 					return ErrParticipationTooManyAnswers
 				}
 			}
+
 			return nil
 		}).
 		WriteBytes(p.EventID[:], func(err error) error {
@@ -69,19 +71,29 @@ func (p *Participation) MarshalJSON() ([]byte, error) {
 		EventID: p.EventID.ToHex(),
 		Answers: iotago.EncodeHex(p.Answers),
 	}
+
 	return json.Marshal(j)
 }
 
 func (p *Participation) UnmarshalJSON(bytes []byte) error {
 	j := &jsonParticipation{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*p = *seri.(*Participation)
+
+	participation, ok := seri.(*Participation)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Participation, got %T", seri))
+	}
+
+	*p = *participation
+
 	return nil
 }
 

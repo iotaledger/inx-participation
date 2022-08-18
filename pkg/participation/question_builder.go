@@ -25,6 +25,7 @@ type QuestionBuilder struct {
 // AddAnswer adds the given answer to the question.
 func (qb *QuestionBuilder) AddAnswer(entry *Answer) *QuestionBuilder {
 	qb.q.Answers = append(qb.q.Answers, entry)
+
 	return qb
 }
 
@@ -33,5 +34,6 @@ func (qb *QuestionBuilder) Build() (*Question, error) {
 	if _, err := qb.q.Serialize(serializer.DeSeriModePerformValidation, nil); err != nil {
 		return nil, fmt.Errorf("unable to build question: %w", err)
 	}
+
 	return qb.q, nil
 }

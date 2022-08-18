@@ -1,4 +1,5 @@
-package test
+//nolint:gosec // we don't care about these linters in test cases
+package participation_test
 
 import (
 	"math/rand"
@@ -7,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestParticipationTestEnv verifies that our ParticipationTestEnv is sane. This allows us to skip the assertions on the other tests to speed them up
+// TestParticipationTestEnv verifies that our ParticipationTestEnv is sane. This allows us to skip the assertions on the other tests to speed them up.
 func TestParticipationTestEnv(t *testing.T) {
 
 	randomBalance := func() uint64 {

@@ -1,3 +1,4 @@
+//nolint:gosec,scopelint // we don't care about these linters in test cases
 package participation_test
 
 import (
@@ -26,12 +27,14 @@ func RandString(strLen int) string {
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
+
 	return string(b)
 }
 
 func RandEventID() participation.EventID {
 	eventID := participation.EventID{}
 	copy(eventID[:], tpkg.RandBytes(participation.EventIDLength))
+
 	return eventID
 }
 
@@ -40,11 +43,12 @@ func RandValidEventWithBallot() (*participation.Event, []byte) {
 }
 
 func RandEventWithBallot(nameLen int, additionalInfoLen int) (*participation.Event, []byte) {
-	commence := uint32(rand.Intn(1000))
-	start := commence + uint32(rand.Intn(1000))
-	end := start + uint32(rand.Intn(1000))
+	commence := iotago.MilestoneIndex(rand.Intn(1000))
+	start := commence + iotago.MilestoneIndex(rand.Intn(1000))
+	end := start + iotago.MilestoneIndex(rand.Intn(1000))
 
 	ballot, _ := RandBallot(1 + rand.Intn(participation.BallotMaxQuestionsCount-1))
+
 	return RandEvent(nameLen, additionalInfoLen, commence, start, end, ballot)
 }
 
@@ -53,11 +57,12 @@ func RandValidEventWithStaking() (*participation.Event, []byte) {
 }
 
 func RandEventWithStaking(nameLen int, additionalInfoLen int) (*participation.Event, []byte) {
-	commence := uint32(rand.Intn(1000))
-	start := commence + uint32(rand.Intn(1000))
-	end := start + uint32(rand.Intn(1000))
+	commence := iotago.MilestoneIndex(rand.Intn(1000))
+	start := commence + iotago.MilestoneIndex(rand.Intn(1000))
+	end := start + iotago.MilestoneIndex(rand.Intn(1000))
 
 	staking, _ := RandStaking(participation.StakingTextMaxLength, participation.StakingSymbolMaxLength, uint32(1+rand.Intn(10000)), uint32(1+rand.Intn(10000)), participation.StakingAdditionalInfoMaxLength)
+
 	return RandEvent(nameLen, additionalInfoLen, commence, start, end, staking)
 }
 
@@ -65,7 +70,7 @@ func RandEventWithoutPayload() (*participation.Event, []byte) {
 	return RandEvent(participation.EventNameMaxLength, participation.EventAdditionalInfoMaxLength, 1, 2, 3, nil)
 }
 
-func RandEvent(nameLen int, additionalInfoLen int, commence uint32, start uint32, end uint32, payload serializer.Serializable) (*participation.Event, []byte) {
+func RandEvent(nameLen int, additionalInfoLen int, commence iotago.MilestoneIndex, start iotago.MilestoneIndex, end iotago.MilestoneIndex, payload serializer.Serializable) (*participation.Event, []byte) {
 	e := &participation.Event{
 		Name:                   RandString(nameLen),
 		MilestoneIndexCommence: commence,
@@ -125,6 +130,7 @@ func TestEvent_Deserialize(t *testing.T) {
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.Equal(t, len(tt.data), bytesRead)
@@ -161,6 +167,7 @@ func TestEvent_Serialize(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
 				assert.True(t, errors.Is(err, tt.err))
+
 				return
 			}
 			assert.EqualValues(t, tt.target, data)
@@ -168,18 +175,19 @@ func TestEvent_Serialize(t *testing.T) {
 	}
 }
 
-func RandBallotEventWithIndexes(commence uint32, start uint32, end uint32) *participation.Event {
+func RandBallotEventWithIndexes(commence iotago.MilestoneIndex, start iotago.MilestoneIndex, end iotago.MilestoneIndex) *participation.Event {
 	ballot, _ := RandBallot(1 + rand.Intn(participation.BallotMaxQuestionsCount-1))
 	event, _ := RandEvent(participation.EventNameMaxLength, participation.EventAdditionalInfoMaxLength, commence, start, end, ballot)
+
 	return event
 }
 
-func RandStakingEvent(nominator uint32, denominator uint32, duration uint32) *participation.Event {
+func RandStakingEvent(nominator uint32, denominator uint32, duration iotago.MilestoneIndex) *participation.Event {
 	eb := participation.NewEventBuilder(
 		RandString(100),
 		5,
 		6,
-		iotago.MilestoneIndex(6+duration),
+		iotago.MilestoneIndex(6)+duration,
 		RandString(100),
 	)
 
@@ -195,6 +203,7 @@ func RandStakingEvent(nominator uint32, denominator uint32, duration uint32) *pa
 	if err != nil {
 		panic(err)
 	}
+
 	return event
 }
 

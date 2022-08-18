@@ -43,17 +43,25 @@ func (s Participations) ToSerializables() serializer.Serializables {
 	for i, x := range s {
 		seris[i] = x
 	}
+
 	return seris
 }
 
 func (s *Participations) FromSerializables(seris serializer.Serializables) {
 	*s = make(Participations, len(seris))
 	for i, seri := range seris {
-		(*s)[i] = seri.(*Participation)
+		participation, ok := seri.(*Participation)
+		if !ok {
+			panic(fmt.Sprintf("invalid type: expected *Participation, got %T", seri))
+		}
+
+		(*s)[i] = participation
 	}
 }
 
-// ParticipationPayload holds the participation for multiple events
+// ParticipationPayload holds the participation for multiple events.
+//
+//nolint:revive // better be explicit here
 type ParticipationPayload struct {
 	// Participations holds the participation for multiple events.
 	Participations Participations
@@ -93,14 +101,23 @@ func (p *ParticipationPayload) MarshalJSON() ([]byte, error) {
 
 func (p *ParticipationPayload) UnmarshalJSON(bytes []byte) error {
 	j := &jsonParticipationPayload{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*p = *seri.(*ParticipationPayload)
+
+	participationPayload, ok := seri.(*ParticipationPayload)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *ParticipationPayload, got %T", seri))
+	}
+
+	*p = *participationPayload
+
 	return nil
 }
 

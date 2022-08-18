@@ -7,7 +7,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	// import implementation
+	// import implementation.
 	"golang.org/x/crypto/blake2b"
 
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -64,19 +64,20 @@ func PayloadSelector(payloadType uint32) (serializer.Serializable, error) {
 	default:
 		return nil, fmt.Errorf("%w: type %d", ErrUnknownPayloadType, payloadType)
 	}
+
 	return seri, nil
 }
 
-// Event
+// Event.
 type Event struct {
 	// Name is the name of the event.
 	Name string
 	// MilestoneIndexCommence is the milestone index the commencing period starts.
-	MilestoneIndexCommence uint32
+	MilestoneIndexCommence iotago.MilestoneIndex
 	// MilestoneIndexStart is the milestone index the holding period starts.
-	MilestoneIndexStart uint32
+	MilestoneIndexStart iotago.MilestoneIndex
 	// MilestoneIndexEnd is the milestone index the event ends.
-	MilestoneIndexEnd uint32
+	MilestoneIndexEnd iotago.MilestoneIndex
 	// Payload is the payload of the event (ballot/staking).
 	Payload serializer.Serializable
 	// AdditionalInfo is an additional description text about the event.
@@ -128,6 +129,7 @@ func (e *Event) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 					return fmt.Errorf("%w: unable to deserialize event, payload cannot be empty", ErrPayloadEmpty)
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -147,6 +149,7 @@ func (e *Event) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 					return fmt.Errorf("%w: unable to serialize event, payload cannot be empty", ErrPayloadEmpty)
 				}
 			}
+
 			return nil
 		}).
 		WriteString(e.Name, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
@@ -183,22 +186,31 @@ func (e *Event) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	rawMsgJsonPayload := json.RawMessage(jsonPayload)
-	j.Payload = &rawMsgJsonPayload
+	rawMsgJSONPayload := json.RawMessage(jsonPayload)
+	j.Payload = &rawMsgJSONPayload
 
 	return json.Marshal(j)
 }
 
 func (e *Event) UnmarshalJSON(bytes []byte) error {
 	j := &jsonEvent{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*e = *seri.(*Event)
+
+	event, ok := seri.(*Event)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Event, got %T", seri))
+	}
+
+	*e = *event
+
 	return nil
 }
 
@@ -213,6 +225,7 @@ func jsonPayloadSelector(ty int) (iotago.JSONSerializable, error) {
 	default:
 		return nil, fmt.Errorf("unable to decode payload type from JSON: %w", ErrUnknownPayloadType)
 	}
+
 	return obj, nil
 }
 
@@ -312,22 +325,23 @@ func (e *Event) Status(atIndex iotago.MilestoneIndex) string {
 	if e.IsAcceptingParticipation(atIndex) {
 		return "commencing"
 	}
+
 	return "ended"
 }
 
 // CommenceMilestoneIndex returns the milestone index the commencing phase of the participation starts.
 func (e *Event) CommenceMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexCommence)
+	return e.MilestoneIndexCommence
 }
 
 // StartMilestoneIndex returns the milestone index the holding phase of the participation starts.
 func (e *Event) StartMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexStart)
+	return e.MilestoneIndexStart
 }
 
 // EndMilestoneIndex returns the milestone index the participation ends.
 func (e *Event) EndMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexEnd)
+	return e.MilestoneIndexEnd
 }
 
 // ShouldAcceptParticipation returns true if the event should accept the participation for the given milestone index.
@@ -352,13 +366,14 @@ func (e *Event) IsCountingParticipation(atIndex iotago.MilestoneIndex) bool {
 
 // BallotCanOverflow returns whether a Ballot event can overflow.
 func (e *Event) BallotCanOverflow(protoParas *iotago.ProtocolParameters) bool {
+	//nolint:ifshort // false positive
 	ballot := e.Ballot()
 	if ballot == nil {
 		return false
 	}
 
 	// Check if total-supply / denominator * number of milestones can overflow uint64
-	maxWeightPerMilestone := uint64(protoParas.TokenSupply) / uint64(BallotDenominator)
+	maxWeightPerMilestone := protoParas.TokenSupply / uint64(BallotDenominator)
 	maxNumberOfMilestones := math.MaxUint64 / maxWeightPerMilestone
 
 	return uint64(e.MilestoneIndexEnd-e.MilestoneIndexStart) > maxNumberOfMilestones
@@ -372,7 +387,7 @@ func (e *Event) StakingCanOverflow(protoParas *iotago.ProtocolParameters) bool {
 	}
 
 	// Check if numerator * total-supply can overflow uint64
-	maxNumerator := math.MaxUint64 / uint64(protoParas.TokenSupply)
+	maxNumerator := math.MaxUint64 / protoParas.TokenSupply
 	if uint64(staking.Numerator) > maxNumerator {
 		return true
 	}

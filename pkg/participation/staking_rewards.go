@@ -3,6 +3,7 @@ package participation
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 	"sort"
 
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -26,7 +27,7 @@ type AddressRewards struct {
 	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
 }
 
-func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex ...iotago.MilestoneIndex) (*AddressRewards, error) {
+func (pm *Manager) AddressRewards(address iotago.Address, msIndex ...iotago.MilestoneIndex) (*AddressRewards, error) {
 	pm.RLock()
 	defer pm.RUnlock()
 
@@ -59,6 +60,7 @@ func (pm *ParticipationManager) AddressRewards(address iotago.Address, msIndex .
 			MinimumReached: amount >= staking.RequiredMinimumRewards,
 		}
 	}
+
 	return addrRewards, nil
 }
 
@@ -76,7 +78,7 @@ type EventRewards struct {
 	Rewards map[string]uint64 `json:"rewards"`
 }
 
-func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneIndex) (*EventRewards, error) {
+func (pm *Manager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneIndex) (*EventRewards, error) {
 	protoParas := pm.protocolParametersFunc()
 
 	pm.RLock()
@@ -108,15 +110,24 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.
 			addresses = append(addresses, addr)
 		}
 		rewardsByAddress[addr] += rewards
+
 		return true
 	}); err != nil {
 		return nil, err
 	}
 
 	responseHash := sha256.New()
-	responseHash.Write(eventID[:])
-	binary.Write(responseHash, binary.LittleEndian, uint32(milestoneIndex))
-	responseHash.Write([]byte(event.Staking().Symbol))
+	if _, err := responseHash.Write(eventID[:]); err != nil {
+		return nil, fmt.Errorf("failed to write eventID to response hash: %w", err)
+	}
+
+	if err := binary.Write(responseHash, binary.LittleEndian, milestoneIndex); err != nil {
+		return nil, fmt.Errorf("failed to write milestone index to response hash: %w", err)
+	}
+
+	if _, err := responseHash.Write([]byte(event.Staking().Symbol)); err != nil {
+		return nil, fmt.Errorf("failed to write staking symbol to response hash: %w", err)
+	}
 
 	eventRewards := &EventRewards{
 		Symbol:         event.Staking().Symbol,
@@ -131,12 +142,20 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.
 		if amount < event.Staking().RequiredMinimumRewards {
 			continue
 		}
-		responseHash.Write([]byte(addr))
-		binary.Write(responseHash, binary.LittleEndian, amount)
+
+		if _, err := responseHash.Write([]byte(addr)); err != nil {
+			return nil, fmt.Errorf("failed to write address to response hash: %w", err)
+		}
+
+		if err := binary.Write(responseHash, binary.LittleEndian, amount); err != nil {
+			return nil, fmt.Errorf("failed to write amount to response hash: %w", err)
+		}
+
 		eventRewards.Rewards[addr] = amount
 		eventRewards.TotalRewards += amount
 	}
 
 	eventRewards.Checksum = iotago.EncodeHex(responseHash.Sum(nil))
+
 	return eventRewards, nil
 }

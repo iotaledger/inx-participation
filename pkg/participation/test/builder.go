@@ -1,4 +1,4 @@
-package test
+package participation_test
 
 import (
 	"github.com/stretchr/testify/require"
@@ -37,23 +37,27 @@ func (env *ParticipationTestEnv) NewParticipationHelper(wallet *utils.HDWallet) 
 
 func (b *ParticipationHelper) WholeWalletBalance() *ParticipationHelper {
 	b.blockBuilder.Amount(b.wallet.Balance())
+
 	return b
 }
 
 func (b *ParticipationHelper) Amount(amount uint64) *ParticipationHelper {
 	b.blockBuilder.Amount(amount)
+
 	return b
 }
 
 func (b *ParticipationHelper) Parents(parents iotago.BlockIDs) *ParticipationHelper {
 	require.NotEmpty(b.env.t, parents)
 	b.blockBuilder.Parents(parents)
+
 	return b
 }
 
 func (b *ParticipationHelper) UsingOutput(output *utxo.Output) *ParticipationHelper {
 	require.NotNil(b.env.t, output)
 	b.blockBuilder.UsingOutput(output)
+
 	return b
 }
 
@@ -62,6 +66,7 @@ func (b *ParticipationHelper) AddParticipations(participations []*participation.
 	for _, p := range participations {
 		b.AddParticipation(p)
 	}
+
 	return b
 }
 
@@ -70,12 +75,14 @@ func (b *ParticipationHelper) AddDefaultBallotVote(eventID participation.EventID
 		EventID: eventID,
 		Answers: []byte{defaultBallotAnswerValue},
 	})
+
 	return b
 }
 
 func (b *ParticipationHelper) AddParticipation(participation *participation.Participation) *ParticipationHelper {
 	require.NotNil(b.env.t, participation)
 	b.participationsBuilder.AddParticipation(participation)
+
 	return b
 }
 
@@ -90,6 +97,7 @@ func (b *ParticipationHelper) Build() *testsuite.Block {
 		FromWallet(b.wallet).
 		TagData(participationsData).
 		BuildTransactionToWallet(b.wallet)
+
 	return block
 }
 

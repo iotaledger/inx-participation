@@ -5,12 +5,14 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
+//nolint:revive // better be explicit here
 type ParticipationBlock struct {
 	BlockID iotago.BlockID
 	Block   *iotago.Block
 	Data    []byte
 }
 
+//nolint:revive // better be explicit here
 type ParticipationOutput struct {
 	BlockID  iotago.BlockID
 	OutputID iotago.OutputID
@@ -35,6 +37,7 @@ func (msg *ParticipationBlock) TransactionEssence() *iotago.TransactionEssence {
 	if transaction := msg.Transaction(); transaction != nil {
 		return transaction.Essence
 	}
+
 	return nil
 }
 
@@ -47,6 +50,7 @@ func (msg *ParticipationBlock) TransactionEssenceTaggedData() *iotago.TaggedData
 			return nil
 		}
 	}
+
 	return nil
 }
 
@@ -63,5 +67,6 @@ func (msg *ParticipationBlock) TransactionEssenceUTXOInputs() iotago.OutputIDs {
 			}
 		}
 	}
+
 	return inputs
 }

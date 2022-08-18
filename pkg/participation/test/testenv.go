@@ -1,4 +1,4 @@
-package test
+package participation_test
 
 import (
 	"context"
@@ -50,7 +50,7 @@ type ParticipationTestEnv struct {
 	Wallet4       *utils.HDWallet
 
 	participationStore kvstore.KVStore
-	rm                 *participation.ParticipationManager
+	rm                 *participation.Manager
 }
 
 func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance uint64, wallet3Balance uint64, wallet4Balance uint64, assertSteps bool) *ParticipationTestEnv {
@@ -65,7 +65,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 	te := testsuite.SetupTestEnvironment(t, genesisAddress, 2, ProtocolVersion, BelowMaxDepth, MinPoWScore, false)
 
-	//Add token supply to our local HDWallet
+	// Add token supply to our local HDWallet
 	genesisWallet.BookOutput(te.GenesisOutput)
 	if assertSteps {
 		te.AssertWalletBalance(genesisWallet, te.ProtocolParameters().TokenSupply)
@@ -137,9 +137,11 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
 			cachedBlock := te.Storage().CachedBlockOrNil(blockID)
 			if cachedBlock == nil {
+				//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
 				return nil, nil
 			}
 			defer cachedBlock.Release(true)
+
 			return &participation.ParticipationBlock{
 				BlockID: blockID,
 				Block:   cachedBlock.Block().Block(),
@@ -152,8 +154,10 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				return nil, err
 			}
 			if output.OutputType() != iotago.OutputBasic {
+				//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
 				return nil, nil
 			}
+
 			return &participation.ParticipationOutput{
 				BlockID:  output.BlockID(),
 				OutputID: outputID,
@@ -213,6 +217,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 
 				currentIndex++
 			}
+
 			return nil
 		},
 		participation.WithTagMessage(ParticipationTag),
@@ -270,7 +275,7 @@ func (env *ParticipationTestEnv) ProtocolParameters() *iotago.ProtocolParameters
 	return env.te.ProtocolParameters()
 }
 
-func (env *ParticipationTestEnv) ParticipationManager() *participation.ParticipationManager {
+func (env *ParticipationTestEnv) ParticipationManager() *participation.Manager {
 	return env.rm
 }
 
@@ -283,15 +288,15 @@ func (env *ParticipationTestEnv) LastMilestoneParents() iotago.BlockIDs {
 }
 
 func (env *ParticipationTestEnv) Cleanup() {
-	env.rm.CloseDatabase()
+	require.NoError(env.t, env.rm.CloseDatabase())
 	env.te.CleanupTestEnvironment(true)
 }
 
 func (env *ParticipationTestEnv) DefaultEvent(commenceMilestoneIndex iotago.MilestoneIndex, startPhaseDuration uint32, holdingDuration uint32) *participation.Event {
 
 	eventCommenceIndex := commenceMilestoneIndex
-	eventStartIndex := eventCommenceIndex + iotago.MilestoneIndex(startPhaseDuration)
-	eventEndIndex := eventStartIndex + iotago.MilestoneIndex(holdingDuration)
+	eventStartIndex := eventCommenceIndex + startPhaseDuration
+	eventEndIndex := eventStartIndex + holdingDuration
 
 	eventBuilder := participation.NewEventBuilder("All 4 HORNET", eventCommenceIndex, eventStartIndex, eventEndIndex, "The biggest governance decision in the history of IOTA")
 
@@ -384,19 +389,25 @@ func (env *ParticipationTestEnv) IssueMilestone(onTips ...iotago.BlockID) (*whit
 
 func (env *ParticipationTestEnv) ActiveParticipationsForEvent(eventID participation.EventID) []*participation.TrackedParticipation {
 	var votes []*participation.TrackedParticipation
-	env.ParticipationManager().ForEachActiveParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
+
+	require.NoError(env.t, env.ParticipationManager().ForEachActiveParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
+
 		return true
-	})
+	}))
+
 	return votes
 }
 
 func (env *ParticipationTestEnv) PastParticipationsForEvent(eventID participation.EventID) []*participation.TrackedParticipation {
 	var votes []*participation.TrackedParticipation
-	env.ParticipationManager().ForEachPastParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
+
+	require.NoError(env.t, env.ParticipationManager().ForEachPastParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
+
 		return true
-	})
+	}))
+
 	return votes
 }
 

@@ -23,6 +23,7 @@ type ParticipationsBuilder struct {
 // AddParticipation adds the given participation to the participations.
 func (b *ParticipationsBuilder) AddParticipation(entry *Participation) *ParticipationsBuilder {
 	b.p.Participations = append(b.p.Participations, entry)
+
 	return b
 }
 
@@ -31,5 +32,6 @@ func (b *ParticipationsBuilder) Build() (*ParticipationPayload, error) {
 	if _, err := b.p.Serialize(serializer.DeSeriModePerformValidation, nil); err != nil {
 		return nil, fmt.Errorf("unable to build participations: %w", err)
 	}
+
 	return b.p, nil
 }

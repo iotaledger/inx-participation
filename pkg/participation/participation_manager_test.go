@@ -1,3 +1,4 @@
+//nolint:scopelint // we don't care about these linters in test cases
 package participation_test
 
 import (
@@ -9,7 +10,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hornet/v2/pkg/model/storage"
 	"github.com/iotaledger/inx-participation/pkg/participation"
-	"github.com/iotaledger/inx-participation/pkg/participation/test"
+	test "github.com/iotaledger/inx-participation/pkg/participation/test"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 )
@@ -1225,11 +1226,13 @@ func TestStakingRewards(t *testing.T) {
 
 	totalRewards := uint64(0)
 	addresses := make(map[string]uint64)
-	env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
+	err = env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
 		totalRewards += rewards
 		addresses[address.String()] += rewards
+
 		return true
 	})
+	require.NoError(t, err)
 
 	// Filter out minimum rewards
 	for addr, amount := range addresses {
@@ -1250,10 +1253,12 @@ func TestStakingRewards(t *testing.T) {
 	require.True(t, wallet4Found)
 
 	totalRewardsWithoutFilter := uint64(0)
-	env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
+	err = env.ParticipationManager().ForEachAddressStakingParticipation(eventID, env.ConfirmedMilestoneIndex(), func(address iotago.Address, _ *participation.TrackedParticipation, rewards uint64) bool {
 		totalRewardsWithoutFilter += rewards
+
 		return true
 	})
+	require.NoError(t, err)
 	require.Exactly(t, totalRewardsWithoutFilter, uint64(6_250_000+1_984_410+6_987_470+75_000_000))
 }
 

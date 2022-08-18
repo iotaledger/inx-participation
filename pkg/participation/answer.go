@@ -21,7 +21,7 @@ var (
 	ErrSerializationReservedValue = errors.New("reserved value used")
 )
 
-// Answer is a possible answer to a Ballot Question
+// Answer is a possible answer to a Ballot Question.
 type Answer struct {
 	// Value is the value that should be used to pick this answer. It must be unique for each answer in a given question. Reserved values are 0 and 255.
 	Value uint8
@@ -48,6 +48,7 @@ func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationM
 					return fmt.Errorf("%w: answer is using a reserved value %d", ErrSerializationReservedValue, a.Value)
 				}
 			}
+
 			return nil
 		}).
 		Done()
@@ -61,6 +62,7 @@ func (a *Answer) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx 
 					return fmt.Errorf("%w: answer is using a reserved value %d", ErrSerializationReservedValue, a.Value)
 				}
 			}
+
 			return nil
 		}).
 		WriteNum(a.Value, func(err error) error {
@@ -81,23 +83,33 @@ func (a *Answer) MarshalJSON() ([]byte, error) {
 		Text:           a.Text,
 		AdditionalInfo: a.AdditionalInfo,
 	}
+
 	return json.Marshal(jAnswer)
 }
 
 func (a *Answer) UnmarshalJSON(bytes []byte) error {
 	jAnswer := &jsonAnswer{}
+
 	if err := json.Unmarshal(bytes, jAnswer); err != nil {
 		return err
 	}
+
 	seri, err := jAnswer.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*a = *seri.(*Answer)
+
+	answer, ok := seri.(*Answer)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Answer, got %T", seri))
+	}
+
+	*a = *answer
+
 	return nil
 }
 
-// jsonAnswer defines the json representation of an Answer
+// jsonAnswer defines the json representation of an Answer.
 type jsonAnswer struct {
 	// Value is the value that should be used to pick this answer. It must be unique for each answer in a given question. Reserved values are 0 and 255.
 	Value uint8 `json:"value"`
@@ -113,5 +125,6 @@ func (j *jsonAnswer) ToSerializable() (serializer.Serializable, error) {
 		Text:           j.Text,
 		AdditionalInfo: j.AdditionalInfo,
 	}
+
 	return payload, nil
 }

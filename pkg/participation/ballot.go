@@ -43,13 +43,18 @@ func (q Questions) ToSerializables() serializer.Serializables {
 	for i, x := range q {
 		seris[i] = x
 	}
+
 	return seris
 }
 
 func (q *Questions) FromSerializables(seris serializer.Serializables) {
 	*q = make(Questions, len(seris))
 	for i, seri := range seris {
-		(*q)[i] = seri.(*Question)
+		question, ok := seri.(*Question)
+		if !ok {
+			panic(fmt.Sprintf("invalid type: expected *Question, got %T", seri))
+		}
+		(*q)[i] = question
 	}
 }
 
@@ -102,14 +107,23 @@ func (q *Ballot) UnmarshalJSON(bytes []byte) error {
 	j := &jsonBallot{
 		Type: int(BallotPayloadTypeID),
 	}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*q = *seri.(*Ballot)
+
+	ballot, ok := seri.(*Ballot)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Ballot, got %T", seri))
+	}
+
+	*q = *ballot
+
 	return nil
 }
 

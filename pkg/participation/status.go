@@ -3,6 +3,7 @@ package participation
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -33,7 +34,7 @@ type StakingStatus struct {
 	Symbol string `json:"symbol"`
 }
 
-// EventStatus holds the status of the event
+// EventStatus holds the status of the event.
 type EventStatus struct {
 	// MilestoneIndex is the milestone index the status was calculated for.
 	MilestoneIndex iotago.MilestoneIndex `json:"milestoneIndex"`
@@ -48,7 +49,7 @@ type EventStatus struct {
 }
 
 // EventStatus returns the EventStatus for an event with the given eventID.
-func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago.MilestoneIndex) (*EventStatus, error) {
+func (pm *Manager) EventStatus(eventID EventID, milestone ...iotago.MilestoneIndex) (*EventStatus, error) {
 	// We need to lock the ParticipationManager here so that we don't get partial results while the new ledger update is being applied
 	pm.RLock()
 	defer pm.RUnlock()
@@ -78,10 +79,11 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 	// compute the sha256 of all the question and answer status or the staking amount and rewards to easily compare
 	statusHash := sha256.New()
 	if _, err := statusHash.Write(eventID[:]); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write eventID to status hash: %w", err)
 	}
+
 	if err := binary.Write(statusHash, binary.LittleEndian, index); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write index to status hash: %w", err)
 	}
 
 	// For each participation, iterate over all questions
@@ -113,6 +115,7 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 			if err := binary.Write(statusHash, binary.LittleEndian, accumulatedBalance); err != nil {
 				return nil, err
 			}
+
 			return &AnswerStatus{
 				Value:       answerValue,
 				Current:     currentBalance,
@@ -146,6 +149,7 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 		status.Questions = append(status.Questions, questionStatus)
 	}
 
+	//nolint:ifshort // false positive
 	staking := event.Staking()
 	if staking != nil {
 		total, err := pm.totalStakingParticipationForEvent(eventID, index)
@@ -168,6 +172,7 @@ func (pm *ParticipationManager) EventStatus(eventID EventID, milestone ...iotago
 	}
 
 	status.Checksum = iotago.EncodeHex(statusHash.Sum(nil))
+
 	return status, nil
 }
 
@@ -177,5 +182,6 @@ func (q *QuestionStatus) StatusForAnswerValue(answerValue uint8) *AnswerStatus {
 			return a
 		}
 	}
+
 	return nil
 }

@@ -34,7 +34,7 @@ const (
 	RouteAddressBech32Outputs = "/addresses/:" + ParameterAddress + "/outputs"
 
 	// RouteAdminCreateEvent is the route the node operator can use to add events.
-	// POST creates a new event to track
+	// POST creates a new event to track.
 	RouteAdminCreateEvent = "/admin/events"
 
 	// RouteAdminDeleteEvent is the route the node operator can use to remove events.
@@ -42,11 +42,11 @@ const (
 	RouteAdminDeleteEvent = "/admin/events/:" + ParameterParticipationEventID
 
 	// RouteAdminActiveParticipations is the route the node operator can use to get all the active participations for a certain event.
-	// GET returns a list of all active participations
+	// GET returns a list of all active participations.
 	RouteAdminActiveParticipations = "/admin/events/:" + ParameterParticipationEventID + "/active"
 
 	// RouteAdminPastParticipations is the route the node operator can use to get all the past participations for a certain event.
-	// GET returns a list of all past participations
+	// GET returns a list of all past participations.
 	RouteAdminPastParticipations = "/admin/events/:" + ParameterParticipationEventID + "/past"
 
 	// RouteAdminRewards is the route the node operator can use to get the rewards for a staking event.
@@ -85,6 +85,7 @@ func setupRoutes(e *echo.Echo) {
 		}
 
 		c.Response().Header().Set(echo.HeaderLocation, resp.EventID)
+
 		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})
 
@@ -101,6 +102,7 @@ func setupRoutes(e *echo.Echo) {
 		if err := deleteEvent(c); err != nil {
 			return err
 		}
+
 		return c.NoContent(http.StatusNoContent)
 	})
 
@@ -118,6 +120,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -126,6 +129,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -134,6 +138,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -142,6 +147,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -150,6 +156,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
@@ -158,6 +165,7 @@ func setupRoutes(e *echo.Echo) {
 		if err != nil {
 			return err
 		}
+
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 }

@@ -46,13 +46,18 @@ func (a Answers) ToSerializables() serializer.Serializables {
 	for i, x := range a {
 		seris[i] = x
 	}
+
 	return seris
 }
 
 func (a *Answers) FromSerializables(seris serializer.Serializables) {
 	*a = make(Answers, len(seris))
 	for i, seri := range seris {
-		(*a)[i] = seri.(*Answer)
+		answer, ok := seri.(*Answer)
+		if !ok {
+			panic(fmt.Sprintf("invalid type: expected *Answer, got %T", seri))
+		}
+		(*a)[i] = answer
 	}
 }
 
@@ -115,14 +120,23 @@ func (q *Question) MarshalJSON() ([]byte, error) {
 
 func (q *Question) UnmarshalJSON(bytes []byte) error {
 	jQuestion := &jsonQuestion{}
+
 	if err := json.Unmarshal(bytes, jQuestion); err != nil {
 		return err
 	}
+
 	seri, err := jQuestion.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*q = *seri.(*Question)
+
+	question, ok := seri.(*Question)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Question, got %T", seri))
+	}
+
+	*q = *question
+
 	return nil
 }
 
@@ -162,16 +176,15 @@ func (j *jsonQuestion) ToSerializable() (serializer.Serializable, error) {
 	return payload, nil
 }
 
-// QuestionAnswers returns the possible answers for a Question
+// QuestionAnswers returns the possible answers for a Question.
 func (q *Question) QuestionAnswers() []*Answer {
 	answers := make([]*Answer, len(q.Answers))
-	for i := range q.Answers {
-		answers[i] = q.Answers[i]
-	}
+	copy(answers, q.Answers)
+
 	return answers
 }
 
-// answerValueForByte checks if the given value is a valid answer and maps any other values to AnswerValueInvalid
+// answerValueForByte checks if the given value is a valid answer and maps any other values to AnswerValueInvalid.
 func (q *Question) answerValueForByte(byteValue byte) uint8 {
 	if byteValue == 0 {
 		return 0
@@ -182,5 +195,6 @@ func (q *Question) answerValueForByte(byteValue byte) uint8 {
 			return a.Value
 		}
 	}
+
 	return AnswerValueInvalid
 }
