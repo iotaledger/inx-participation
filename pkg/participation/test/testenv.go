@@ -293,8 +293,8 @@ func (env *ParticipationTestEnv) Cleanup() {
 func (env *ParticipationTestEnv) DefaultEvent(commenceMilestoneIndex iotago.MilestoneIndex, startPhaseDuration uint32, holdingDuration uint32) *participation.Event {
 
 	eventCommenceIndex := commenceMilestoneIndex
-	eventStartIndex := eventCommenceIndex + iotago.MilestoneIndex(startPhaseDuration)
-	eventEndIndex := eventStartIndex + iotago.MilestoneIndex(holdingDuration)
+	eventStartIndex := eventCommenceIndex + startPhaseDuration
+	eventEndIndex := eventStartIndex + holdingDuration
 
 	eventBuilder := participation.NewEventBuilder("All 4 HORNET", eventCommenceIndex, eventStartIndex, eventEndIndex, "The biggest governance decision in the history of IOTA")
 

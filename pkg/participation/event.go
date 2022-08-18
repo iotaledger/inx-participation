@@ -73,11 +73,11 @@ type Event struct {
 	// Name is the name of the event.
 	Name string
 	// MilestoneIndexCommence is the milestone index the commencing period starts.
-	MilestoneIndexCommence uint32
+	MilestoneIndexCommence iotago.MilestoneIndex
 	// MilestoneIndexStart is the milestone index the holding period starts.
-	MilestoneIndexStart uint32
+	MilestoneIndexStart iotago.MilestoneIndex
 	// MilestoneIndexEnd is the milestone index the event ends.
-	MilestoneIndexEnd uint32
+	MilestoneIndexEnd iotago.MilestoneIndex
 	// Payload is the payload of the event (ballot/staking).
 	Payload serializer.Serializable
 	// AdditionalInfo is an additional description text about the event.
@@ -323,17 +323,17 @@ func (e *Event) Status(atIndex iotago.MilestoneIndex) string {
 
 // CommenceMilestoneIndex returns the milestone index the commencing phase of the participation starts.
 func (e *Event) CommenceMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexCommence)
+	return e.MilestoneIndexCommence
 }
 
 // StartMilestoneIndex returns the milestone index the holding phase of the participation starts.
 func (e *Event) StartMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexStart)
+	return e.MilestoneIndexStart
 }
 
 // EndMilestoneIndex returns the milestone index the participation ends.
 func (e *Event) EndMilestoneIndex() iotago.MilestoneIndex {
-	return iotago.MilestoneIndex(e.MilestoneIndexEnd)
+	return e.MilestoneIndexEnd
 }
 
 // ShouldAcceptParticipation returns true if the event should accept the participation for the given milestone index.
@@ -364,7 +364,7 @@ func (e *Event) BallotCanOverflow(protoParas *iotago.ProtocolParameters) bool {
 	}
 
 	// Check if total-supply / denominator * number of milestones can overflow uint64
-	maxWeightPerMilestone := uint64(protoParas.TokenSupply) / uint64(BallotDenominator)
+	maxWeightPerMilestone := protoParas.TokenSupply / uint64(BallotDenominator)
 	maxNumberOfMilestones := math.MaxUint64 / maxWeightPerMilestone
 
 	return uint64(e.MilestoneIndexEnd-e.MilestoneIndexStart) > maxNumberOfMilestones
@@ -378,7 +378,7 @@ func (e *Event) StakingCanOverflow(protoParas *iotago.ProtocolParameters) bool {
 	}
 
 	// Check if numerator * total-supply can overflow uint64
-	maxNumerator := math.MaxUint64 / uint64(protoParas.TokenSupply)
+	maxNumerator := math.MaxUint64 / protoParas.TokenSupply
 	if uint64(staking.Numerator) > maxNumerator {
 		return true
 	}

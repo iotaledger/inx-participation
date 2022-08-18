@@ -35,7 +35,7 @@ func ledgerIndexKey() []byte {
 
 func (pm *ParticipationManager) storeLedgerIndex(index iotago.MilestoneIndex) error {
 	m := marshalutil.New(4)
-	m.WriteUint32(uint32(index))
+	m.WriteUint32(index)
 
 	return pm.participationStore.Set(ledgerIndexKey(), m.Bytes())
 }
@@ -52,7 +52,7 @@ func (pm *ParticipationManager) readLedgerIndex() (iotago.MilestoneIndex, error)
 	m := marshalutil.New(v)
 	u, err := m.ReadUint32()
 
-	return iotago.MilestoneIndex(u), err
+	return u, err
 }
 
 // Events
@@ -389,7 +389,7 @@ func currentBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 func currentBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIndex uint8, answerIndex uint8) []byte {
 	m := marshalutil.New(39)
 	m.WriteBytes(currentBallotVoteBalanceKeyPrefix(eventID)) // 33 bytes
-	m.WriteUint32(uint32(milestone))                         // 4 bytes
+	m.WriteUint32(milestone)                                 // 4 bytes
 	m.WriteUint8(questionIndex)                              // 1 byte
 	m.WriteUint8(answerIndex)                                // 1 byte
 
@@ -407,7 +407,7 @@ func accumulatedBallotVoteBalanceKeyPrefix(eventID EventID) []byte {
 func accumulatedBallotVoteBalanceKeyForQuestionAndAnswer(eventID EventID, milestone iotago.MilestoneIndex, questionIndex uint8, answerIndex uint8) []byte {
 	m := marshalutil.New(39)
 	m.WriteBytes(accumulatedBallotVoteBalanceKeyPrefix(eventID)) // 33 bytes
-	m.WriteUint32(uint32(milestone))                             // 4 bytes
+	m.WriteUint32(milestone)                                     // 4 bytes
 	m.WriteUint8(questionIndex)                                  // 1 byte
 	m.WriteUint8(answerIndex)                                    // 1 byte
 
@@ -676,7 +676,7 @@ func currentRewardsKeyForEventPrefix(eventID EventID) []byte {
 func currentRewardsPerMilestoneKeyForEvent(eventID EventID, milestone iotago.MilestoneIndex) []byte {
 	m := marshalutil.New(37)
 	m.WriteBytes(currentRewardsKeyForEventPrefix(eventID)) // 33 bytes
-	m.WriteUint32(uint32(milestone))                       // 4 bytes
+	m.WriteUint32(milestone)                               // 4 bytes
 
 	return m.Bytes()
 }
@@ -692,7 +692,7 @@ func totalParticipationStakingKeyForEventPrefix(eventID EventID) []byte {
 func totalParticipationStakingKeyForEvent(eventID EventID, milestone iotago.MilestoneIndex) []byte {
 	m := marshalutil.New(37)
 	m.WriteBytes(totalParticipationStakingKeyForEventPrefix(eventID)) // 33 bytes
-	m.WriteUint32(uint32(milestone))                                  // 4 bytes
+	m.WriteUint32(milestone)                                          // 4 bytes
 
 	return m.Bytes()
 }

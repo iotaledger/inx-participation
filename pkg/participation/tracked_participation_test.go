@@ -54,11 +54,11 @@ func TestTrackedParticipation_Serialization(t *testing.T) {
 
 	startIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.StartIndex, iotago.MilestoneIndex(startIndex))
+	require.Exactly(t, p.StartIndex, startIndex)
 
 	endIndex, err := ms.ReadUint32()
 	require.NoError(t, err)
-	require.Exactly(t, p.EndIndex, iotago.MilestoneIndex(endIndex))
+	require.Exactly(t, p.EndIndex, endIndex)
 
 	require.Equal(t, 48, ms.ReadOffset())
 }
@@ -82,8 +82,8 @@ func TestTrackedParticipation_Deserialization(t *testing.T) {
 	ms = marshalutil.New(48)
 	ms.WriteBytes(blockID[:])
 	ms.WriteUint64(amount)
-	ms.WriteUint32(uint32(startIndex))
-	ms.WriteUint32(uint32(endIndex))
+	ms.WriteUint32(startIndex)
+	ms.WriteUint32(endIndex)
 
 	value := ms.Bytes()
 	require.Equal(t, 48, len(value))

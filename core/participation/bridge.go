@@ -38,7 +38,7 @@ func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.Mil
 		return 0, 0
 	}
 
-	return iotago.MilestoneIndex(status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex()), iotago.MilestoneIndex(status.GetTanglePruningIndex())
+	return status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex(), status.GetTanglePruningIndex()
 }
 
 func BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {

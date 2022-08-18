@@ -12,9 +12,9 @@ func NewEventBuilder(name string, milestoneCommence iotago.MilestoneIndex, miles
 	return &EventBuilder{
 		event: &Event{
 			Name:                   name,
-			MilestoneIndexCommence: uint32(milestoneCommence),
-			MilestoneIndexStart:    uint32(milestoneBeginHolding),
-			MilestoneIndexEnd:      uint32(milestoneEnd),
+			MilestoneIndexCommence: milestoneCommence,
+			MilestoneIndexStart:    milestoneBeginHolding,
+			MilestoneIndexEnd:      milestoneEnd,
 			AdditionalInfo:         additionalInfo,
 		},
 	}

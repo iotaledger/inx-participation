@@ -117,7 +117,7 @@ func (pm *ParticipationManager) EventRewards(eventID EventID, msIndex ...iotago.
 
 	responseHash := sha256.New()
 	responseHash.Write(eventID[:])
-	binary.Write(responseHash, binary.LittleEndian, uint32(milestoneIndex))
+	binary.Write(responseHash, binary.LittleEndian, milestoneIndex)
 	responseHash.Write([]byte(event.Staking().Symbol))
 
 	eventRewards := &EventRewards{

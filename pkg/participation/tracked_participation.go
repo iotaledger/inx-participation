@@ -110,17 +110,17 @@ func TrackedParticipationFromBytes(key []byte, value []byte) (*TrackedParticipat
 		OutputID:   outputID,
 		BlockID:    blockID,
 		Amount:     amount,
-		StartIndex: iotago.MilestoneIndex(start),
-		EndIndex:   iotago.MilestoneIndex(end),
+		StartIndex: start,
+		EndIndex:   end,
 	}, nil
 }
 
 func (t *TrackedParticipation) ValueBytes() []byte {
 	m := marshalutil.New(48)
-	m.WriteBytes(t.BlockID[:])          // 32 bytes
-	m.WriteUint64(t.Amount)             // 8 bytes
-	m.WriteUint32(uint32(t.StartIndex)) // 4 bytes
-	m.WriteUint32(uint32(t.EndIndex))   // 4 bytes
+	m.WriteBytes(t.BlockID[:])  // 32 bytes
+	m.WriteUint64(t.Amount)     // 8 bytes
+	m.WriteUint32(t.StartIndex) // 4 bytes
+	m.WriteUint32(t.EndIndex)   // 4 bytes
 
 	return m.Bytes()
 }
