@@ -89,14 +89,22 @@ func (a *Answer) MarshalJSON() ([]byte, error) {
 
 func (a *Answer) UnmarshalJSON(bytes []byte) error {
 	jAnswer := &jsonAnswer{}
+
 	if err := json.Unmarshal(bytes, jAnswer); err != nil {
 		return err
 	}
+
 	seri, err := jAnswer.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*a = *seri.(*Answer)
+
+	answer, ok := seri.(*Answer)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Answer, got %T", seri))
+	}
+
+	*a = *answer
 
 	return nil
 }

@@ -866,7 +866,7 @@ func (pm *Manager) ForEachAddressStakingParticipation(eventID EventID, msIndex i
 			return false
 		}
 
-		return consumer(addr.(iotago.Address), participation, balance)
+		return consumer(addr, participation, balance)
 	}); err != nil {
 		return err
 	}

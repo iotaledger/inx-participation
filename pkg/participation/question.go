@@ -53,7 +53,11 @@ func (a Answers) ToSerializables() serializer.Serializables {
 func (a *Answers) FromSerializables(seris serializer.Serializables) {
 	*a = make(Answers, len(seris))
 	for i, seri := range seris {
-		(*a)[i] = seri.(*Answer)
+		answer, ok := seri.(*Answer)
+		if !ok {
+			panic(fmt.Sprintf("invalid type: expected *Answer, got %T", seri))
+		}
+		(*a)[i] = answer
 	}
 }
 
@@ -116,14 +120,22 @@ func (q *Question) MarshalJSON() ([]byte, error) {
 
 func (q *Question) UnmarshalJSON(bytes []byte) error {
 	jQuestion := &jsonQuestion{}
+
 	if err := json.Unmarshal(bytes, jQuestion); err != nil {
 		return err
 	}
+
 	seri, err := jQuestion.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*q = *seri.(*Question)
+
+	question, ok := seri.(*Question)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Question, got %T", seri))
+	}
+
+	*q = *question
 
 	return nil
 }

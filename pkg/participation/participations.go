@@ -50,7 +50,12 @@ func (s Participations) ToSerializables() serializer.Serializables {
 func (s *Participations) FromSerializables(seris serializer.Serializables) {
 	*s = make(Participations, len(seris))
 	for i, seri := range seris {
-		(*s)[i] = seri.(*Participation)
+		participation, ok := seri.(*Participation)
+		if !ok {
+			panic(fmt.Sprintf("invalid type: expected *Participation, got %T", seri))
+		}
+
+		(*s)[i] = participation
 	}
 }
 
@@ -96,14 +101,22 @@ func (p *ParticipationPayload) MarshalJSON() ([]byte, error) {
 
 func (p *ParticipationPayload) UnmarshalJSON(bytes []byte) error {
 	j := &jsonParticipationPayload{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*p = *seri.(*ParticipationPayload)
+
+	participationPayload, ok := seri.(*ParticipationPayload)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *ParticipationPayload, got %T", seri))
+	}
+
+	*p = *participationPayload
 
 	return nil
 }

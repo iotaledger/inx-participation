@@ -194,14 +194,22 @@ func (e *Event) MarshalJSON() ([]byte, error) {
 
 func (e *Event) UnmarshalJSON(bytes []byte) error {
 	j := &jsonEvent{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*e = *seri.(*Event)
+
+	event, ok := seri.(*Event)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Event, got %T", seri))
+	}
+
+	*e = *event
 
 	return nil
 }

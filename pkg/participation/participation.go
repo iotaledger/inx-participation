@@ -77,14 +77,22 @@ func (p *Participation) MarshalJSON() ([]byte, error) {
 
 func (p *Participation) UnmarshalJSON(bytes []byte) error {
 	j := &jsonParticipation{}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*p = *seri.(*Participation)
+
+	participation, ok := seri.(*Participation)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Participation, got %T", seri))
+	}
+
+	*p = *participation
 
 	return nil
 }

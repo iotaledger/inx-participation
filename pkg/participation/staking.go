@@ -135,14 +135,22 @@ func (s *Staking) UnmarshalJSON(bytes []byte) error {
 	j := &jsonStaking{
 		Type: int(StakingPayloadTypeID),
 	}
+
 	if err := json.Unmarshal(bytes, j); err != nil {
 		return err
 	}
+
 	seri, err := j.ToSerializable()
 	if err != nil {
 		return err
 	}
-	*s = *seri.(*Staking)
+
+	staking, ok := seri.(*Staking)
+	if !ok {
+		panic(fmt.Sprintf("invalid type: expected *Staking, got %T", seri))
+	}
+
+	*s = *staking
 
 	return nil
 }
