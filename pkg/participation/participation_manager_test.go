@@ -10,7 +10,7 @@ import (
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/hornet/v2/pkg/model/storage"
 	"github.com/iotaledger/inx-participation/pkg/participation"
-	participation_test "github.com/iotaledger/inx-participation/pkg/participation/test"
+	test "github.com/iotaledger/inx-participation/pkg/participation/test"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/builder"
 )
@@ -104,7 +104,7 @@ func TestEventStateHelpers(t *testing.T) {
 }
 
 func TestEventStates(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -151,7 +151,7 @@ func TestEventStates(t *testing.T) {
 }
 
 func TestTaggedDataPayloads(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	eventID := RandEventID()
@@ -170,14 +170,14 @@ func TestTaggedDataPayloads(t *testing.T) {
 		Amount(env.Wallet2.Balance()).
 		BuildTransactionToWallet(env.Wallet2)
 
-	invalidPayloadMessage := env.NewBlockBuilder(participation_test.ParticipationTag).
+	invalidPayloadMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		TagData([]byte{0}).
 		BuildTransactionToWallet(env.Wallet2)
 
-	emptyTaggedDataMessage := env.NewBlockBuilder(participation_test.ParticipationTag).
+	emptyTaggedDataMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
@@ -193,14 +193,14 @@ func TestTaggedDataPayloads(t *testing.T) {
 	participationsData, err := participations.Serialize(serializer.DeSeriModePerformValidation, nil)
 	require.NoError(t, err)
 
-	wrongAddressMessage := env.NewBlockBuilder(participation_test.ParticipationTag).
+	wrongAddressMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		TagData(participationsData).
 		BuildTransactionToWallet(env.Wallet3)
 
-	multipleOutputsMessage := env.NewBlockBuilder(participation_test.ParticipationTag).
+	multipleOutputsMessage := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(10_000_000).
@@ -209,7 +209,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 
 	txBuilder := builder.NewTransactionBuilder(env.ProtocolParameters().NetworkID())
 	txBuilder.AddTaggedDataPayload(&iotago.TaggedData{
-		Tag:  []byte(participation_test.ParticipationTag),
+		Tag:  []byte(test.ParticipationTag),
 		Data: participationsData,
 	})
 	txBuilder.AddInput(&builder.TxInput{UnlockTarget: env.Wallet3.Address(), InputID: env.Wallet3.Outputs()[0].OutputID(), Input: env.Wallet3.Outputs()[0].Output()})
@@ -244,7 +244,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			output, participations, err := env.ParticipationManager().ParticipationsFromBlock(participation_test.ParticipationBlockFromBlock(tt.block), 0)
+			output, participations, err := env.ParticipationManager().ParticipationsFromBlock(test.ParticipationBlockFromBlock(tt.block), 0)
 			require.NoError(t, err)
 
 			if tt.outputExists {
@@ -259,7 +259,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 }
 
 func TestSingleBallotVote(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -359,7 +359,7 @@ func TestSingleBallotVote(t *testing.T) {
 }
 
 func TestInvalidVoteHandling(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -419,7 +419,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 	env.AssertDefaultBallotAnswerStatus(eventID, 1_000, 1_000)
 
 	// Send an invalid participation
-	invalidParticipation := env.NewBlockBuilder(participation_test.ParticipationTag).
+	invalidParticipation := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet1).
 		Amount(env.Wallet1.Balance()).
@@ -442,7 +442,7 @@ func TestInvalidVoteHandling(t *testing.T) {
 }
 
 func TestBallotVoteCancel(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 1_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -519,7 +519,7 @@ func TestBallotVoteCancel(t *testing.T) {
 }
 
 func TestBallotAddVoteBalanceBySweeping(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -572,7 +572,7 @@ func TestBallotAddVoteBalanceBySweeping(t *testing.T) {
 }
 
 func TestBallotAddVoteBalanceByMultipleOutputs(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -630,7 +630,7 @@ func TestBallotAddVoteBalanceByMultipleOutputs(t *testing.T) {
 }
 
 func TestMultipleBallotVotes(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -709,7 +709,7 @@ func TestMultipleBallotVotes(t *testing.T) {
 }
 
 func TestChangeOpinionMidVote(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -783,7 +783,7 @@ func TestChangeOpinionMidVote(t *testing.T) {
 }
 
 func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -948,7 +948,7 @@ func TestMultipleConcurrentEventsWithBallot(t *testing.T) {
 }
 
 func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 150_000_000, 200_000_000, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -1082,7 +1082,7 @@ func TestMultipleConcurrentEventsWithBallotCalculatedAfterEventEnded(t *testing.
 }
 
 func TestStakingRewards(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -1263,7 +1263,7 @@ func TestStakingRewards(t *testing.T) {
 }
 
 func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -1355,7 +1355,7 @@ func TestStakingRewardsCalculatedAfterEventEnded(t *testing.T) {
 
 func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
 	defer env.Cleanup()
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
@@ -1392,7 +1392,7 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 	ms.WriteBytes(eventID[:])
 	ms.WriteUint8(0)
 
-	doubleStakeWallet1 := env.NewBlockBuilder(participation_test.ParticipationTag).
+	doubleStakeWallet1 := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet1).
 		Amount(env.Wallet1.Balance()).
@@ -1409,7 +1409,7 @@ func TestMultipleParticipationsAreNotCounted(t *testing.T) {
 }
 
 func TestStoreEventCanOverflow(t *testing.T) {
-	env := participation_test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
+	env := test.NewParticipationTestEnv(t, 5_000_000, 1_587_529, 5_589_977, 300_000_000, false)
 	defer env.Cleanup()
 
 	_, err := env.ParticipationManager().StoreEvent(RandStakingEvent(6_636, 1, 1))
