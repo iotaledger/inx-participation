@@ -143,6 +143,7 @@ func (pm *ParticipationManager) storeBlockForEvent(eventID EventID, block *Parti
 func (pm *ParticipationManager) BlockForEventAndBlockID(eventID EventID, blockID iotago.BlockID) (*ParticipationBlock, error) {
 	value, err := pm.participationStore.Get(blockKeyForEventAndBlockID(eventID, blockID))
 	if errors.Is(err, kvstore.ErrKeyNotFound) {
+		//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil
 	}
 	if err != nil {

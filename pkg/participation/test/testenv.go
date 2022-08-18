@@ -137,6 +137,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
 			cachedBlock := te.Storage().CachedBlockOrNil(blockID)
 			if cachedBlock == nil {
+				//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
 				return nil, nil
 			}
 			defer cachedBlock.Release(true)
@@ -153,6 +154,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				return nil, err
 			}
 			if output.OutputType() != iotago.OutputBasic {
+				//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
 				return nil, nil
 			}
 

@@ -822,6 +822,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 
 	outputAddress, err := serializedAddressFromOutput(depositOutput)
 	if err != nil {
+		//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil, nil
 	}
 
@@ -840,6 +841,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 	for _, input := range inputOutputs {
 		inputAddress, err := input.Address.Serialize(serializer.DeSeriModeNoValidation, nil)
 		if err != nil {
+			//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 			return nil, nil, nil
 		}
 
@@ -852,6 +854,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 
 	if !containsInputFromSameAddress {
 		// no input address match the output address =>  not a valid voting transaction
+		//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil, nil
 	}
 
@@ -862,6 +865,7 @@ func (pm *ParticipationManager) ParticipationsFromBlock(msg *ParticipationBlock,
 
 	participations, err := participationFromTaggedData(txEssenceTaggedData)
 	if err != nil {
+		//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil, nil
 	}
 
