@@ -65,10 +65,15 @@ func OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOu
 		return nil, err
 	}
 	switch resp.GetPayload().(type) {
+
+	//nolint:nosnakecase // grpc uses underscores
 	case *inx.OutputResponse_Output:
 		return participationOutputFromINXOutput(resp.GetOutput()), nil
+
+	//nolint:nosnakecase // grpc uses underscores
 	case *inx.OutputResponse_Spent:
 		return participationOutputFromINXOutput(resp.GetSpent().GetOutput()), nil
+
 	default:
 		return nil, fmt.Errorf("invalid inx.OutputResponse payload type")
 	}
