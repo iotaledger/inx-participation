@@ -187,9 +187,11 @@ func (pm *Manager) eventIDsWithoutLocking(eventPayloadType ...uint32) []EventID 
 		events = filteredEvents(events, eventPayloadType)
 	}
 
-	var ids []EventID
+	ids := make([]EventID, len(events))
+	i := 0
 	for id := range events {
-		ids = append(ids, id)
+		ids[i] = id
+		i++
 	}
 
 	return ids
@@ -732,6 +734,7 @@ func (pm *Manager) applyNewConfirmedMilestoneIndexForEvents(index iotago.Milesto
 
 func filterValidParticipationsForEvents(index iotago.MilestoneIndex, votes []*Participation, events map[EventID]*Event) []*Participation {
 
+	//nolint:prealloc // false positive
 	var validParticipations []*Participation
 	for _, vote := range votes {
 
@@ -766,9 +769,9 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 		return nil, fmt.Errorf("no valid votes payload")
 	}
 
-	var votes []*Participation
-	for _, vote := range parsedVotes.Participations {
-		votes = append(votes, vote)
+	votes := make([]*Participation, len(parsedVotes.Participations))
+	for i, vote := range parsedVotes.Participations {
+		votes[i] = vote
 	}
 
 	return votes, nil
@@ -829,13 +832,15 @@ func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iota
 	}
 
 	// collect inputs
-	var inputOutputs []*ParticipationOutput
-	for _, input := range msg.TransactionEssenceUTXOInputs() {
+	inputs := msg.TransactionEssenceUTXOInputs()
+	inputOutputs := make([]*ParticipationOutput, len(inputs))
+	for i, input := range inputs {
 		output, err := pm.outputForOutputIDFunc(input)
 		if err != nil {
 			return nil, nil, err
 		}
-		inputOutputs = append(inputOutputs, output)
+
+		inputOutputs[i] = output
 	}
 
 	// check if at least 1 input comes from the same address as the output

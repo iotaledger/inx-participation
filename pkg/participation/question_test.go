@@ -1,4 +1,4 @@
-//nolint:gosec // we don't care about these linters in test cases
+//nolint:gosec,prealloc // we don't care about these linters in test cases
 package participation_test
 
 import (

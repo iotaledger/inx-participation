@@ -40,12 +40,13 @@ func parseEventTypeQueryParam(c echo.Context) ([]uint32, error) {
 		return []uint32{}, nil
 	}
 
-	var returnTypes []uint32
-	for _, typeParam := range typeParams {
+	returnTypes := make([]uint32, len(typeParams))
+	for i, typeParam := range typeParams {
 		intParam, err := strconv.ParseUint(typeParam, 10, 32)
 		if err != nil {
 			return []uint32{}, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event type: %s, error: %s", typeParam, err)
 		}
+
 		eventType := uint32(intParam)
 		switch eventType {
 		case participation.BallotPayloadTypeID:
@@ -53,7 +54,8 @@ func parseEventTypeQueryParam(c echo.Context) ([]uint32, error) {
 		default:
 			return []uint32{}, errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid event type: %s", typeParam)
 		}
-		returnTypes = append(returnTypes, eventType)
+
+		returnTypes[i] = eventType
 	}
 
 	return returnTypes, nil
