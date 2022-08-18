@@ -1,4 +1,4 @@
-package test
+package participation_test
 
 import (
 	"context"

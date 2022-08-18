@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/inx-participation/pkg/participation"
-	"github.com/iotaledger/inx-participation/pkg/participation/test"
+	participation_test "github.com/iotaledger/inx-participation/pkg/participation/test"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -26,12 +26,12 @@ K: (1+2 Milestones) = 6 7 8 9 10 (event start) 11 12 (staked) 13 (spent) (staked
 */
 
 type stakingTestEnv struct {
-	env     *test.ParticipationTestEnv
+	env     *participation_test.ParticipationTestEnv
 	eventID participation.EventID
 }
 
 func stakingEnv(t *testing.T) *stakingTestEnv {
-	env := test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
+	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
 
 	confirmedMilestoneIndex := env.ConfirmedMilestoneIndex() // 4
 	require.Equal(t, iotago.MilestoneIndex(4), confirmedMilestoneIndex)
@@ -547,7 +547,7 @@ func assertTotalRewardsFromParticipations(t *testing.T, participations []struct 
 	endIndex   iotago.MilestoneIndex
 }, milestoneIndexToCalculate iotago.MilestoneIndex, expectedRewards uint64) {
 
-	env := test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
+	env := participation_test.NewParticipationTestEnv(t, 1_000_000, 1_000_000, 1_000_000, 1_000_000, false)
 	defer env.Cleanup()
 
 	eventBuilder := participation.NewEventBuilder("AlbinoPugCoin", 2041634, 2102114, 2879714, "The first DogCoin on the Tangle")
