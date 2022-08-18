@@ -3,6 +3,7 @@ package participation
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 	"sort"
 
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -116,9 +117,17 @@ func (pm *Manager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneInde
 	}
 
 	responseHash := sha256.New()
-	responseHash.Write(eventID[:])
-	binary.Write(responseHash, binary.LittleEndian, milestoneIndex)
-	responseHash.Write([]byte(event.Staking().Symbol))
+	if _, err := responseHash.Write(eventID[:]); err != nil {
+		return nil, fmt.Errorf("failed to write eventID to response hash: %w", err)
+	}
+
+	if err := binary.Write(responseHash, binary.LittleEndian, milestoneIndex); err != nil {
+		return nil, fmt.Errorf("failed to write milestone index to response hash: %w", err)
+	}
+
+	if _, err := responseHash.Write([]byte(event.Staking().Symbol)); err != nil {
+		return nil, fmt.Errorf("failed to write staking symbol to response hash: %w", err)
+	}
 
 	eventRewards := &EventRewards{
 		Symbol:         event.Staking().Symbol,
@@ -133,8 +142,15 @@ func (pm *Manager) EventRewards(eventID EventID, msIndex ...iotago.MilestoneInde
 		if amount < event.Staking().RequiredMinimumRewards {
 			continue
 		}
-		responseHash.Write([]byte(addr))
-		binary.Write(responseHash, binary.LittleEndian, amount)
+
+		if _, err := responseHash.Write([]byte(addr)); err != nil {
+			return nil, fmt.Errorf("failed to write address to response hash: %w", err)
+		}
+
+		if err := binary.Write(responseHash, binary.LittleEndian, amount); err != nil {
+			return nil, fmt.Errorf("failed to write amount to response hash: %w", err)
+		}
+
 		eventRewards.Rewards[addr] = amount
 		eventRewards.TotalRewards += amount
 	}

@@ -3,6 +3,7 @@ package participation
 import (
 	"crypto/sha256"
 	"encoding/binary"
+	"fmt"
 
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -78,10 +79,11 @@ func (pm *Manager) EventStatus(eventID EventID, milestone ...iotago.MilestoneInd
 	// compute the sha256 of all the question and answer status or the staking amount and rewards to easily compare
 	statusHash := sha256.New()
 	if _, err := statusHash.Write(eventID[:]); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write eventID to status hash: %w", err)
 	}
+
 	if err := binary.Write(statusHash, binary.LittleEndian, index); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to write index to status hash: %w", err)
 	}
 
 	// For each participation, iterate over all questions

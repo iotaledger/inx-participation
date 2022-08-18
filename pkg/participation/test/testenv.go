@@ -288,7 +288,7 @@ func (env *ParticipationTestEnv) LastMilestoneParents() iotago.BlockIDs {
 }
 
 func (env *ParticipationTestEnv) Cleanup() {
-	env.rm.CloseDatabase()
+	require.NoError(env.t, env.rm.CloseDatabase())
 	env.te.CleanupTestEnvironment(true)
 }
 
@@ -389,22 +389,24 @@ func (env *ParticipationTestEnv) IssueMilestone(onTips ...iotago.BlockID) (*whit
 
 func (env *ParticipationTestEnv) ActiveParticipationsForEvent(eventID participation.EventID) []*participation.TrackedParticipation {
 	var votes []*participation.TrackedParticipation
-	env.ParticipationManager().ForEachActiveParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
+
+	require.NoError(env.t, env.ParticipationManager().ForEachActiveParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
 
 		return true
-	})
+	}))
 
 	return votes
 }
 
 func (env *ParticipationTestEnv) PastParticipationsForEvent(eventID participation.EventID) []*participation.TrackedParticipation {
 	var votes []*participation.TrackedParticipation
-	env.ParticipationManager().ForEachPastParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
+
+	require.NoError(env.t, env.ParticipationManager().ForEachPastParticipation(eventID, func(trackedVote *participation.TrackedParticipation) bool {
 		votes = append(votes, trackedVote)
 
 		return true
-	})
+	}))
 
 	return votes
 }
