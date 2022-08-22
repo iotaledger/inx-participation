@@ -13,11 +13,10 @@ keywords:
 
 # API Reference
 
-You can find specifications of the API exposed by INX-Participation in the links below:
+You can find specifications for the INX-Participation API by the link below:
 
 - [HORNET Participation Plugin](https://github.com/iota-community/treasury/blob/main/specifications/hornet-participation-plugin.md#public-node-endpoints)
 
-
 :::note
-   The linked specification defines the Chrysalis version of the participation plugin and has not been updated yet to match the implementation in INX-Participation.
+   These specifications are for the Chrysalis version of the plugin, so they might differ from the INX-Participation version.
 :::
