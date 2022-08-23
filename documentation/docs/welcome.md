@@ -15,7 +15,7 @@ keywords:
 
 # Welcome to INX-Participation
 
-There is no dedicated structure for a voting event on the Tangle. Instead, it is represented by multiple individual transactions with certain payloads. To access the state of a voting event and the amount and distribution of the votes, you would have to find all these transactions in the Tangle and count each vote. INX-Participation does that you: it builds a database of all voting transactions for given events and provides REST API endpoints for clients to access this information. Node operators manually select which events they wish to track.
+There is no dedicated structure for a voting event on the Tangle. Instead, it is represented by multiple individual transactions with specific payloads. To access the state of a voting event and the amount and distribution of the votes, you would have to find all these transactions in the Tangle and count each vote. INX-Participation does that for you: it builds a database of all voting transactions for given events and provides REST API endpoints for clients to access this information. Node operators manually select which events they wish to track.
 
 You can find more information about participation events in the [Hornet Participation](https://github.com/iota-community/treasury/blob/main/specifications/hornet-participation-plugin.md) plugin specifications.
 
@@ -26,7 +26,7 @@ These images are also used in our [HORNET recommended setup using Docker](http:/
 
 ## Configuration
 
-The participation extension connects to the running Hornet instance by default.
+The participation extension connects to the local Hornet instance by default.
 
 You can find all the configuration options in the [configuration section](reference/configuration.md).
 
