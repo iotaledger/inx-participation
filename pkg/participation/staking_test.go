@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -79,12 +79,12 @@ func TestStaking_Deserialize(t *testing.T) {
 			u := &participation.Staking{}
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.Equal(t, len(tt.data), bytesRead)
-			assert.EqualValues(t, tt.target, u)
+			require.Equal(t, len(tt.data), bytesRead)
+			require.EqualValues(t, tt.target, u)
 		})
 	}
 }
@@ -106,7 +106,7 @@ func TestStaking_Serialize(t *testing.T) {
 	}{
 		{"ok", staking, stakingData, nil},
 		{"too long text", longName, longNameData, serializer.ErrStringTooLong},
-		{"too short symbol", shortSymbol, shortSymbolData, participation.ErrSerializationStringLengthInvalid},
+		{"too short symbol", shortSymbol, shortSymbolData, serializer.ErrStringTooShort},
 		{"too long symbol", longSymbol, longSymbolData, serializer.ErrStringTooLong},
 		{"too long additional info", longAdditionalInfo, longAdditionalInfoData, serializer.ErrStringTooLong},
 		{"invalid numerator", invalidNumerator, invalidNumeratorData, participation.ErrInvalidNumeratorOrDenominator},
@@ -116,11 +116,11 @@ func TestStaking_Serialize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.EqualValues(t, tt.target, data)
+			require.EqualValues(t, tt.target, data)
 		})
 	}
 }

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -70,12 +70,12 @@ func TestQuestion_Deserialize(t *testing.T) {
 			u := &participation.Question{}
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.Equal(t, len(tt.data), bytesRead)
-			assert.EqualValues(t, tt.target, u)
+			require.Equal(t, len(tt.data), bytesRead)
+			require.EqualValues(t, tt.target, u)
 		})
 	}
 }
@@ -107,11 +107,11 @@ func TestQuestion_Serialize(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.EqualValues(t, tt.target, data)
+			require.EqualValues(t, tt.target, data)
 		})
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/iotaledger/hive.go/core/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
@@ -49,19 +49,19 @@ func TestParticipation_Deserialize(t *testing.T) {
 		{"not enough data", validParticipationData[:len(validParticipationData)-1], validParticipation, serializer.ErrDeserializationNotEnoughData},
 		{"no answers", emptyParticipationData, emptyParticipation, nil},
 		{"max answers", maxParticipationData, maxParticipation, nil},
-		{"too many answers", tooManyParticipationData, tooManyParticipation, participation.ErrParticipationTooManyAnswers},
+		{"too many answers", tooManyParticipationData, tooManyParticipation, serializer.ErrSliceLengthTooLong},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &participation.Participation{}
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.Equal(t, len(tt.data), bytesRead)
-			assert.EqualValues(t, tt.target, u)
+			require.Equal(t, len(tt.data), bytesRead)
+			require.EqualValues(t, tt.target, u)
 		})
 	}
 }
@@ -81,17 +81,17 @@ func TestParticipation_Serialize(t *testing.T) {
 		{"ok", validParticipation, validParticipationData, nil},
 		{"no answers", emptyParticipation, emptyParticipationData, nil},
 		{"max answers", maxParticipation, maxParticipationData, nil},
-		{"too many answers", tooManyParticipation, tooManyParticipationData, participation.ErrParticipationTooManyAnswers},
+		{"too many answers", tooManyParticipation, tooManyParticipationData, serializer.ErrSliceLengthTooLong},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			data, err := tt.source.Serialize(serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				assert.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err))
 
 				return
 			}
-			assert.EqualValues(t, tt.target, data)
+			require.EqualValues(t, tt.target, data)
 		})
 	}
 }
