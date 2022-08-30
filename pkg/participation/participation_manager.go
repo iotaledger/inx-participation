@@ -181,7 +181,7 @@ func (pm *Manager) LedgerIndex() iotago.MilestoneIndex {
 	defer pm.RUnlock()
 	index, err := pm.readLedgerIndex()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to read ledger index: %w", err))
 	}
 
 	return index

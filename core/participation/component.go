@@ -54,12 +54,12 @@ func provide(c *dig.Container) error {
 
 		dbEngine, err := database.EngineFromStringAllowed(ParamsParticipation.Database.Engine)
 		if err != nil {
-			CoreComponent.LogPanic(err)
+			CoreComponent.LogErrorAndExit(err)
 		}
 
 		participationStore, err := database.StoreWithDefaultSettings(ParamsParticipation.Database.Path, true, dbEngine)
 		if err != nil {
-			CoreComponent.LogPanic(err)
+			CoreComponent.LogErrorAndExit(err)
 		}
 
 		pm, err := participation.NewManager(
@@ -72,7 +72,7 @@ func provide(c *dig.Container) error {
 			LedgerUpdates,
 		)
 		if err != nil {
-			CoreComponent.LogPanic(err)
+			CoreComponent.LogErrorAndExit(err)
 		}
 		CoreComponent.LogInfof("Initialized ParticipationManager at milestone %d", pm.LedgerIndex())
 
@@ -84,11 +84,11 @@ func configure() error {
 	if err := CoreComponent.App.Daemon().BackgroundWorker("Close Participation database", func(ctx context.Context) {
 		<-ctx.Done()
 
-		CoreComponent.LogInfo("Syncing Participation database to disk...")
+		CoreComponent.LogInfo("Syncing Participation database to disk ...")
 		if err := deps.ParticipationManager.CloseDatabase(); err != nil {
-			CoreComponent.LogPanicf("Syncing Participation database to disk... failed: %s", err)
+			CoreComponent.LogErrorfAndExit("Syncing Participation database to disk ... failed: %s", err)
 		}
-		CoreComponent.LogInfo("Syncing Participation database to disk... done")
+		CoreComponent.LogInfo("Syncing Participation database to disk ... done")
 	}, daemon.PriorityCloseParticipationDatabase); err != nil {
 		CoreComponent.LogPanicf("failed to start worker: %s", err)
 	}
@@ -109,7 +109,7 @@ func run() error {
 		if err := LedgerUpdates(ctx, startIndex, 0, func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
 			timeStart := time.Now()
 			if err := deps.ParticipationManager.ApplyNewLedgerUpdate(index, created, consumed); err != nil {
-				CoreComponent.LogPanicf("ApplyNewLedgerUpdate failed: %s", err)
+				CoreComponent.LogErrorfAndExit("ApplyNewLedgerUpdate failed: %s", err)
 
 				return err
 			}
@@ -130,22 +130,27 @@ func run() error {
 	if err := CoreComponent.Daemon().BackgroundWorker("API", func(ctx context.Context) {
 		CoreComponent.LogInfo("Starting API ... done")
 
+		CoreComponent.LogInfo("Starting API server ...")
+
 		e := httpserver.NewEcho(CoreComponent.Logger(), nil, ParamsRestAPI.DebugRequestLoggerEnabled)
 
 		setupRoutes(e)
 		go func() {
 			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
 			if err := e.Start(ParamsRestAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				CoreComponent.LogPanicf("Stopped REST-API server due to an error (%s)", err)
+				CoreComponent.LogErrorfAndExit("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
 		ctxRegister, cancelRegister := context.WithTimeout(ctx, 5*time.Second)
 
 		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, APIRoute, ParamsRestAPI.BindAddress); err != nil {
-			CoreComponent.LogPanicf("Registering INX api route failed: %s", err)
+			CoreComponent.LogErrorfAndExit("Registering INX api route failed: %s", err)
 		}
 
+		cancelRegister()
+
+		CoreComponent.LogInfo("Starting API server ... done")
 		<-ctx.Done()
 		CoreComponent.LogInfo("Stopping API ...")
 
