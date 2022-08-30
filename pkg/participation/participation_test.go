@@ -49,14 +49,14 @@ func TestParticipation_Deserialize(t *testing.T) {
 		{"not enough data", validParticipationData[:len(validParticipationData)-1], validParticipation, serializer.ErrDeserializationNotEnoughData},
 		{"no answers", emptyParticipationData, emptyParticipation, nil},
 		{"max answers", maxParticipationData, maxParticipation, nil},
-		{"too many answers", tooManyParticipationData, tooManyParticipation, serializer.ErrSliceLengthTooLong},
+		{"too many answers", tooManyParticipationData, tooManyParticipation, serializer.ErrDeserializationLengthInvalid},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := &participation.Participation{}
 			bytesRead, err := u.Deserialize(tt.data, serializer.DeSeriModePerformValidation, nil)
 			if tt.err != nil {
-				require.True(t, errors.Is(err, tt.err))
+				require.True(t, errors.Is(err, tt.err), tt.name)
 
 				return
 			}
