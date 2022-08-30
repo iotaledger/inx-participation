@@ -53,7 +53,7 @@ func provide(c *dig.Container) error {
 
 	return c.Provide(func(deps participationDeps) *participation.Manager {
 
-		dbEngine, err := database.DatabaseEngineFromStringAllowed(ParamsParticipation.Database.Engine)
+		dbEngine, err := database.EngineFromStringAllowed(ParamsParticipation.Database.Engine)
 		if err != nil {
 			CoreComponent.LogPanic(err)
 		}
@@ -64,6 +64,7 @@ func provide(c *dig.Container) error {
 		}
 
 		pm, err := participation.NewManager(
+			CoreComponent.Daemon().ContextStopped(),
 			participationStore,
 			deps.NodeBridge.ProtocolParameters,
 			NodeStatus,
@@ -139,22 +140,32 @@ func run() error {
 			}
 		}()
 
-		if err := deps.NodeBridge.RegisterAPIRoute(APIRoute, ParamsParticipation.BindAddress); err != nil {
-			CoreComponent.LogPanicf("Error registering INX api route (%s)", err)
+		ctxRegister, cancelRegister := context.WithTimeout(ctx, 5*time.Second)
+		defer cancelRegister()
+
+		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, APIRoute, ParamsParticipation.BindAddress); err != nil {
+			CoreComponent.LogPanicf("Registering INX api route failed: %s", err)
 		}
 
 		<-ctx.Done()
 		CoreComponent.LogInfo("Stopping API ...")
 
-		if err := deps.NodeBridge.UnregisterAPIRoute(APIRoute); err != nil {
-			CoreComponent.LogWarnf("Error unregistering INX api route (%s)", err)
+		ctxUnregister, cancelUnregister := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelUnregister()
+
+		//nolint:contextcheck // false positive
+		if err := deps.NodeBridge.UnregisterAPIRoute(ctxUnregister, APIRoute); err != nil {
+			CoreComponent.LogWarnf("Unregistering INX api route failed: %s", err)
 		}
 
 		shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer shutdownCtxCancel()
+
+		//nolint:contextcheck // false positive
 		if err := e.Shutdown(shutdownCtx); err != nil {
 			CoreComponent.LogWarn(err)
 		}
-		shutdownCtxCancel()
+
 		CoreComponent.LogInfo("Stopping API ... done")
 	}, daemon.PriorityStopParticipationAPI); err != nil {
 		CoreComponent.LogPanicf("failed to start worker: %s", err)
