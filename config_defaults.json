@@ -10,8 +10,11 @@
     "db": {
       "engine": "rocksdb",
       "path": "database"
-    },
-    "bindAddress": "localhost:9892"
+    }
+  },
+  "restAPI": {
+    "bindAddress": "localhost:9892",
+    "debugRequestLoggerEnabled": false
   },
   "profiling": {
     "enabled": false,
