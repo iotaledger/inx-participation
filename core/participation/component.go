@@ -5,14 +5,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/pkg/errors"
 	"go.uber.org/dig"
 
 	"github.com/iotaledger/hive.go/core/app"
 	"github.com/iotaledger/hive.go/core/app/core/shutdown"
 	"github.com/iotaledger/hornet/v2/pkg/database"
+	"github.com/iotaledger/inx-app/httpserver"
 	"github.com/iotaledger/inx-app/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/daemon"
 	"github.com/iotaledger/inx-participation/pkg/participation"
@@ -131,19 +130,19 @@ func run() error {
 	if err := CoreComponent.Daemon().BackgroundWorker("API", func(ctx context.Context) {
 		CoreComponent.LogInfo("Starting API ... done")
 
-		e := newEcho()
+		e := httpserver.NewEcho(CoreComponent.Logger(), nil, ParamsRestAPI.DebugRequestLoggerEnabled)
+
 		setupRoutes(e)
 		go func() {
-			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsParticipation.BindAddress)
-			if err := e.Start(ParamsParticipation.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
+			if err := e.Start(ParamsRestAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
 				CoreComponent.LogPanicf("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
 		ctxRegister, cancelRegister := context.WithTimeout(ctx, 5*time.Second)
-		defer cancelRegister()
 
-		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, APIRoute, ParamsParticipation.BindAddress); err != nil {
+		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, APIRoute, ParamsRestAPI.BindAddress); err != nil {
 			CoreComponent.LogPanicf("Registering INX api route failed: %s", err)
 		}
 
@@ -172,12 +171,4 @@ func run() error {
 	}
 
 	return nil
-}
-
-func newEcho() *echo.Echo {
-	e := echo.New()
-	e.HideBanner = true
-	e.Use(middleware.Recover())
-
-	return e
 }

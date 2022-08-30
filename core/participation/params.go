@@ -11,14 +11,23 @@ type ParametersParticipation struct {
 		// Path defines the path to the database folder.
 		Path string `default:"database" usage:"the path to the database folder"`
 	} `name:"db"`
-	BindAddress string `default:"localhost:9892" usage:"bind address on which the Participation HTTP server listens"`
+}
+
+// ParametersRestAPI contains the definition of the parameters used by REST API.
+type ParametersRestAPI struct {
+	// BindAddress defines the bind address on which the Participation HTTP server listens.
+	BindAddress string `default:"localhost:9892" usage:"the bind address on which the Participation HTTP server listens"`
+	// DebugRequestLoggerEnabled defines whether the debug logging for requests should be enabled
+	DebugRequestLoggerEnabled bool `default:"false" usage:"whether the debug logging for requests should be enabled"`
 }
 
 var ParamsParticipation = &ParametersParticipation{}
+var ParamsRestAPI = &ParametersRestAPI{}
 
 var params = &app.ComponentParams{
 	Params: map[string]any{
 		"participation": ParamsParticipation,
+		"restAPI":       ParamsRestAPI,
 	},
 	Masked: nil,
 }
