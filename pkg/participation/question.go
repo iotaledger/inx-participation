@@ -75,13 +75,13 @@ func (q *Question) Deserialize(data []byte, deSeriMode serializer.DeSerializatio
 	return serializer.NewDeserializer(data).
 		ReadString(&q.Text, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation question text: %w", err)
-		}, QuestionTextMaxLength).
+		}, 0, QuestionTextMaxLength).
 		ReadSliceOfObjects(&q.Answers, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, serializer.TypeDenotationNone, answersArrayRules, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation question answers: %w", err)
 		}).
 		ReadString(&q.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation question additional info: %w", err)
-		}, QuestionAdditionalInfoMaxLength).
+		}, 0, QuestionAdditionalInfoMaxLength).
 		Done()
 }
 
@@ -89,13 +89,13 @@ func (q *Question) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCt
 	return serializer.NewSerializer().
 		WriteString(q.Text, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize participation question text: %w", err)
-		}, QuestionTextMaxLength).
+		}, 0, QuestionTextMaxLength).
 		WriteSliceOfObjects(&q.Answers, deSeriMode, deSeriCtx, serializer.SeriLengthPrefixTypeAsByte, answersArrayRules, func(err error) error {
 			return fmt.Errorf("unable to serialize participation question answers: %w", err)
 		}).
 		WriteString(q.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize participation question additional info: %w", err)
-		}, QuestionAdditionalInfoMaxLength).
+		}, 0, QuestionAdditionalInfoMaxLength).
 		Serialize()
 }
 
