@@ -28,11 +28,10 @@ type EventID [EventIDLength]byte
 var (
 	NullEventID = EventID{}
 
-	ErrUnknownPayloadType               = errors.New("unknown payload type")
-	ErrInvalidMilestoneSequence         = errors.New("milestone are not monotonically increasing")
-	ErrPayloadEmpty                     = errors.New("payload cannot be empty")
-	ErrSerializationStringLengthInvalid = errors.New("invalid string length")
-	ErrSerializationUnknownType         = errors.New("invalid type")
+	ErrUnknownPayloadType       = errors.New("unknown payload type")
+	ErrInvalidMilestoneSequence = errors.New("milestone are not monotonically increasing")
+	ErrPayloadEmpty             = errors.New("payload cannot be empty")
+	ErrSerializationUnknownType = errors.New("invalid type")
 
 	eventPayloadRules = &serializer.ArrayRules{
 		Guards: serializer.SerializableGuard{
@@ -98,7 +97,7 @@ func (e *Event) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 	return serializer.NewDeserializer(data).
 		ReadString(&e.Name, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize event name: %w", err)
-		}, EventNameMaxLength).
+		}, 0, EventNameMaxLength).
 		ReadNum(&e.MilestoneIndexCommence, func(err error) error {
 			return fmt.Errorf("unable to deserialize event commence milestone: %w", err)
 		}).
@@ -113,7 +112,7 @@ func (e *Event) Deserialize(data []byte, deSeriMode serializer.DeSerializationMo
 		}).
 		ReadString(&e.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize event additional info: %w", err)
-		}, EventAdditionalInfoMaxLength).
+		}, 0, EventAdditionalInfoMaxLength).
 		ConsumedAll(func(leftOver int, err error) error {
 			return fmt.Errorf("%w: unable to deserialize event: %d bytes are still available", err, leftOver)
 		}).
@@ -154,7 +153,7 @@ func (e *Event) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 		}).
 		WriteString(e.Name, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize event name: %w", err)
-		}, EventNameMaxLength).
+		}, 0, EventNameMaxLength).
 		WriteNum(e.MilestoneIndexCommence, func(err error) error {
 			return fmt.Errorf("unable to serialize event commence milestone: %w", err)
 		}).
@@ -169,7 +168,7 @@ func (e *Event) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx i
 		}).
 		WriteString(e.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize event additional info: %w", err)
-		}, EventAdditionalInfoMaxLength).
+		}, 0, EventAdditionalInfoMaxLength).
 		Serialize()
 }
 

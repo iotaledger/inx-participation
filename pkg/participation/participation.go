@@ -4,18 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/pkg/errors"
-
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
 const (
 	BallotDenominator = 1000
-)
-
-var (
-	ErrParticipationTooManyAnswers = errors.New("participation contains more answers than what a ballot can hold")
 )
 
 // Participation holds the participation for an event and the optional answer to a ballot.
@@ -33,36 +27,18 @@ func (p *Participation) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		}).
 		ReadVariableByteSlice(&p.Answers, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize answers in participation: %w", err)
-		}).
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if len(p.Answers) > BallotMaxQuestionsCount {
-					return ErrParticipationTooManyAnswers
-				}
-			}
-
-			return nil
-		}).
+		}, 0, BallotMaxQuestionsCount).
 		Done()
 }
 
 func (p *Participation) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
-		AbortIf(func(err error) error {
-			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
-				if len(p.Answers) > BallotMaxQuestionsCount {
-					return ErrParticipationTooManyAnswers
-				}
-			}
-
-			return nil
-		}).
 		WriteBytes(p.EventID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize eventID in participation: %w", err)
 		}).
 		WriteVariableByteSlice(p.Answers, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize answers in participation: %w", err)
-		}).
+		}, 0, BallotMaxQuestionsCount).
 		Serialize()
 }
 

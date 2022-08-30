@@ -38,10 +38,10 @@ func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationM
 		}).
 		ReadString(&a.Text, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation answer text: %w", err)
-		}, AnswerTextMaxLength).
+		}, 0, AnswerTextMaxLength).
 		ReadString(&a.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation answer additional info: %w", err)
-		}, AnswerAdditionalInfoMaxLength).
+		}, 0, AnswerAdditionalInfoMaxLength).
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
 				if a.Value == AnswerValueSkipped || a.Value == AnswerValueInvalid {
@@ -70,10 +70,10 @@ func (a *Answer) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx 
 		}).
 		WriteString(a.Text, serializer.SeriLengthPrefixTypeAsByte, func(err error) error {
 			return fmt.Errorf("unable to serialize participation answer text: %w", err)
-		}, AnswerTextMaxLength).
+		}, 0, AnswerTextMaxLength).
 		WriteString(a.AdditionalInfo, serializer.SeriLengthPrefixTypeAsUint16, func(err error) error {
 			return fmt.Errorf("unable to serialize participation answer additional info: %w", err)
-		}, AnswerAdditionalInfoMaxLength).
+		}, 0, AnswerAdditionalInfoMaxLength).
 		Serialize()
 }
 

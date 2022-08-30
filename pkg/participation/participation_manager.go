@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -23,15 +24,18 @@ var (
 )
 
 type ProtocolParametersProvider func() *iotago.ProtocolParameters
-type NodeStatusProvider func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex)
-type BlockForBlockIDProvider func(blockID iotago.BlockID) (*ParticipationBlock, error)
-type OutputForOutputIDProvider func(outputID iotago.OutputID) (*ParticipationOutput, error)
+type NodeStatusProvider func(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex)
+type BlockForBlockIDProvider func(ctx context.Context, blockID iotago.BlockID) (*ParticipationBlock, error)
+type OutputForOutputIDProvider func(ctx context.Context, outputID iotago.OutputID) (*ParticipationOutput, error)
 type LedgerUpdatesProvider func(ctx context.Context, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex, handler func(index iotago.MilestoneIndex, created []*ParticipationOutput, consumed []*ParticipationOutput) error) error
 
 // Manager is used to track the outcome of participation in the tangle.
 type Manager struct {
 	// lock used to secure the state of the Manager.
 	syncutils.RWMutex
+
+	//nolint:containedctx // false positive
+	ctx context.Context
 
 	protocolParametersFunc ProtocolParametersProvider
 	nodeStatusFunc         NodeStatusProvider
@@ -78,6 +82,7 @@ type Option func(opts *Options)
 
 // NewManager creates a new Manager instance.
 func NewManager(
+	ctx context.Context,
 	participationStore kvstore.KVStore,
 	protocolParametersProvider ProtocolParametersProvider,
 	nodeStatusProvider NodeStatusProvider,
@@ -96,6 +101,7 @@ func NewManager(
 	}
 
 	manager := &Manager{
+		ctx:                      ctx,
 		protocolParametersFunc:   protocolParametersProvider,
 		nodeStatusFunc:           nodeStatusProvider,
 		blockForBlockIDFunc:      blockForBlockIDProvider,
@@ -175,7 +181,7 @@ func (pm *Manager) LedgerIndex() iotago.MilestoneIndex {
 	defer pm.RUnlock()
 	index, err := pm.readLedgerIndex()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("failed to read ledger index: %w", err))
 	}
 
 	return index
@@ -260,8 +266,11 @@ func (pm *Manager) StoreEvent(event *Event) (EventID, error) {
 	pm.Lock()
 	defer pm.Unlock()
 
+	ctx, cancel := context.WithTimeout(pm.ctx, 5*time.Second)
+	defer cancel()
+
 	protoParas := pm.protocolParametersFunc()
-	confirmedIndex, pruningIndex := pm.nodeStatusFunc()
+	confirmedIndex, pruningIndex := pm.nodeStatusFunc(ctx)
 
 	eventID, err := event.ID()
 	if err != nil {
@@ -361,7 +370,7 @@ func (pm *Manager) calculatePastParticipationForEvent(event *Event) error {
 		endIndex = ledgerIndex
 	}
 
-	err = pm.ledgerUpdatesFunc(context.Background(), event.CommenceMilestoneIndex(), endIndex, func(index iotago.MilestoneIndex, created []*ParticipationOutput, consumed []*ParticipationOutput) error {
+	err = pm.ledgerUpdatesFunc(pm.ctx, event.CommenceMilestoneIndex(), endIndex, func(index iotago.MilestoneIndex, created []*ParticipationOutput, consumed []*ParticipationOutput) error {
 		for _, output := range created {
 			if err := pm.applyNewUTXOForEvents(index, output, events); err != nil {
 				return err
@@ -432,7 +441,10 @@ func (pm *Manager) ApplyNewLedgerUpdate(index iotago.MilestoneIndex, created []*
 //   - The Indexation must match the configured Indexation.
 //   - The participation data must be parseable.
 func (pm *Manager) applyNewUTXOForEvents(index iotago.MilestoneIndex, newOutput *ParticipationOutput, events map[EventID]*Event) error {
-	block, err := pm.blockForBlockIDFunc(newOutput.BlockID)
+	ctx, cancel := context.WithTimeout(pm.ctx, 5*time.Second)
+	defer cancel()
+
+	block, err := pm.blockForBlockIDFunc(ctx, newOutput.BlockID)
 	if err != nil {
 		return err
 	}
@@ -829,11 +841,14 @@ func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iota
 		return nil, nil, nil
 	}
 
+	ctx, cancel := context.WithTimeout(pm.ctx, 5*time.Second)
+	defer cancel()
+
 	// collect inputs
 	inputs := msg.TransactionEssenceUTXOInputs()
 	inputOutputs := make([]*ParticipationOutput, len(inputs))
 	for i, input := range inputs {
-		output, err := pm.outputForOutputIDFunc(input)
+		output, err := pm.outputForOutputIDFunc(ctx, input)
 		if err != nil {
 			return nil, nil, err
 		}

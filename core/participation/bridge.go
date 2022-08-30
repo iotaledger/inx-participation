@@ -32,8 +32,8 @@ func participationOutputFromINXOutput(output *inx.LedgerOutput) *participation.P
 	}
 }
 
-func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
-	status, err := deps.NodeBridge.NodeStatus()
+func NodeStatus(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
+	status, err := deps.NodeBridge.NodeStatus(ctx)
 	if err != nil {
 		return 0, 0
 	}
@@ -41,8 +41,8 @@ func NodeStatus() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.Mil
 	return status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex(), status.GetTanglePruningIndex()
 }
 
-func BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
-	block, err := deps.NodeBridge.Client().ReadBlock(context.Background(), inx.NewBlockId(blockID))
+func BlockForBlockID(ctx context.Context, blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
+	block, err := deps.NodeBridge.Client().ReadBlock(ctx, inx.NewBlockId(blockID))
 	if err != nil {
 		return nil, err
 	}
@@ -59,8 +59,8 @@ func BlockForBlockID(blockID iotago.BlockID) (*participation.ParticipationBlock,
 	}, nil
 }
 
-func OutputForOutputID(outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
-	resp, err := deps.NodeBridge.Client().ReadOutput(context.Background(), inx.NewOutputId(outputID))
+func OutputForOutputID(ctx context.Context, outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
+	resp, err := deps.NodeBridge.Client().ReadOutput(ctx, inx.NewOutputId(outputID))
 	if err != nil {
 		return nil, err
 	}

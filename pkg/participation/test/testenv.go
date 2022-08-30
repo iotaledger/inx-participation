@@ -127,14 +127,15 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	store := mapdb.NewMapDB()
 
 	pm, err := participation.NewManager(
+		context.Background(),
 		store,
 		func() *iotago.ProtocolParameters {
 			return te.ProtocolParameters()
 		},
-		func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
+		func(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
-		func(blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
+		func(ctx context.Context, blockID iotago.BlockID) (*participation.ParticipationBlock, error) {
 			cachedBlock := te.Storage().CachedBlockOrNil(blockID)
 			if cachedBlock == nil {
 				//nolint:nilnil // nil, nil is ok in this context, even if it is not go idiomatic
@@ -148,7 +149,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 				Data:    cachedBlock.Block().Data(),
 			}, nil
 		},
-		func(outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
+		func(ctx context.Context, outputID iotago.OutputID) (*participation.ParticipationOutput, error) {
 			output, err := te.UTXOManager().ReadOutputByOutputIDWithoutLocking(outputID)
 			if err != nil {
 				return nil, err
