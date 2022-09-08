@@ -9,7 +9,7 @@ import (
 	"go.uber.org/dig"
 
 	"github.com/iotaledger/hive.go/core/app"
-	"github.com/iotaledger/hive.go/core/app/core/shutdown"
+	"github.com/iotaledger/hive.go/core/app/pkg/shutdown"
 	"github.com/iotaledger/hornet/v2/pkg/database"
 	"github.com/iotaledger/inx-app/httpserver"
 	"github.com/iotaledger/inx-app/nodebridge"
@@ -81,7 +81,7 @@ func provide(c *dig.Container) error {
 }
 
 func configure() error {
-	if err := CoreComponent.App.Daemon().BackgroundWorker("Close Participation database", func(ctx context.Context) {
+	if err := CoreComponent.App().Daemon().BackgroundWorker("Close Participation database", func(ctx context.Context) {
 		<-ctx.Done()
 
 		CoreComponent.LogInfo("Syncing Participation database to disk ...")
