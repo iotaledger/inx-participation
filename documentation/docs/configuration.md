@@ -146,10 +146,11 @@ Example:
 
 ## <a id="restapi"></a> 5. RestAPI
 
-| Name                      | Description                                                     | Type    | Default value    |
-| ------------------------- | --------------------------------------------------------------- | ------- | ---------------- |
-| bindAddress               | The bind address on which the Participation HTTP server listens | string  | "localhost:9892" |
-| debugRequestLoggerEnabled | Whether the debug logging for requests should be enabled        | boolean | false            |
+| Name                      | Description                                                                                   | Type    | Default value    |
+| ------------------------- | --------------------------------------------------------------------------------------------- | ------- | ---------------- |
+| bindAddress               | The bind address on which the Participation HTTP server listens                               | string  | "localhost:9892" |
+| advertiseAddress          | The address of the Participation HTTP server which is advertised to the INX Server (optional) | string  | ""               |
+| debugRequestLoggerEnabled | Whether the debug logging for requests should be enabled                                      | boolean | false            |
 
 Example:
 
@@ -157,6 +158,7 @@ Example:
   {
     "restAPI": {
       "bindAddress": "localhost:9892",
+      "advertiseAddress": "",
       "debugRequestLoggerEnabled": false
     }
   }

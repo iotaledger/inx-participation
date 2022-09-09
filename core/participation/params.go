@@ -13,10 +13,14 @@ type ParametersParticipation struct {
 	} `name:"db"`
 }
 
-// ParametersRestAPI contains the definition of the parameters used by REST API.
+// ParametersRestAPI contains the definition of the parameters used by the Participation HTTP server.
 type ParametersRestAPI struct {
 	// BindAddress defines the bind address on which the Participation HTTP server listens.
 	BindAddress string `default:"localhost:9892" usage:"the bind address on which the Participation HTTP server listens"`
+
+	// AdvertiseAddress defines the address of the Participation HTTP server which is advertised to the INX Server (optional).
+	AdvertiseAddress string `default:"" usage:"the address of the Participation HTTP server which is advertised to the INX Server (optional)"`
+
 	// DebugRequestLoggerEnabled defines whether the debug logging for requests should be enabled
 	DebugRequestLoggerEnabled bool `default:"false" usage:"whether the debug logging for requests should be enabled"`
 }
