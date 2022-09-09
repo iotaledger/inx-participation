@@ -33,10 +33,7 @@ func participationOutputFromINXOutput(output *inx.LedgerOutput) *participation.P
 }
 
 func NodeStatus(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
-	status, err := deps.NodeBridge.NodeStatus(ctx)
-	if err != nil {
-		return 0, 0
-	}
+	status := deps.NodeBridge.NodeStatus()
 
 	return status.GetConfirmedMilestone().GetMilestoneInfo().GetMilestoneIndex(), status.GetTanglePruningIndex()
 }
