@@ -787,15 +787,6 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 	return votes, nil
 }
 
-func serializedAddressFromOutput(output *iotago.BasicOutput) ([]byte, error) {
-	outputAddress, err := output.UnlockConditionSet().Address().Address.Serialize(serializer.DeSeriModeNoValidation, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return outputAddress, nil
-}
-
 func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iotago.MilestoneIndex) (*ParticipationOutput, []*Participation, error) {
 	transaction := msg.Transaction()
 	if transaction == nil {
@@ -835,45 +826,34 @@ func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iota
 		return nil, nil, nil
 	}
 
-	outputAddress, err := serializedAddressFromOutput(depositOutput)
-	if err != nil {
-		//nolint:nilnil,nilerr // nil, nil, nil is ok in this context, even if it is not go idiomatic
+	// don't allow any timelocks, expirations or return conditions
+	depositOutputUnlockConditions := depositOutput.UnlockConditionSet()
+	if depositOutputUnlockConditions.HasExpirationCondition() || depositOutputUnlockConditions.HasTimelockCondition() || depositOutputUnlockConditions.HasStorageDepositReturnCondition() {
 		return nil, nil, nil
 	}
 
-	ctx, cancel := context.WithTimeout(pm.ctx, 5*time.Second)
-	defer cancel()
-
-	// collect inputs
-	inputs := msg.TransactionEssenceUTXOInputs()
-	inputOutputs := make([]*ParticipationOutput, len(inputs))
-	for i, input := range inputs {
-		output, err := pm.outputForOutputIDFunc(ctx, input)
-		if err != nil {
-			return nil, nil, err
+	containsSignatureFromOutputAddress := false
+	for _, unlock := range transaction.Unlocks {
+		signatureUnlock, matches := unlock.(*iotago.SignatureUnlock)
+		if !matches {
+			continue
 		}
 
-		inputOutputs[i] = output
-	}
-
-	// check if at least 1 input comes from the same address as the output
-	containsInputFromSameAddress := false
-	for _, input := range inputOutputs {
-		inputAddress, err := input.Address.Serialize(serializer.DeSeriModeNoValidation, nil)
-		if err != nil {
-			//nolint:nilnil,nilerr // nil, nil, nil is ok in this context, even if it is not go idiomatic
-			return nil, nil, nil
+		ed25519Signature, matches := signatureUnlock.Signature.(*iotago.Ed25519Signature)
+		if !matches {
+			continue
 		}
 
-		if bytes.Equal(outputAddress, inputAddress) {
-			containsInputFromSameAddress = true
+		unlockAddress := iotago.Ed25519AddressFromPubKey(ed25519Signature.PublicKey[:])
 
+		if depositOutputUnlockConditions.Address().Address.Equal(&unlockAddress) {
+			containsSignatureFromOutputAddress = true
 			break
 		}
 	}
 
-	if !containsInputFromSameAddress {
-		// no input address match the output address =>  not a valid voting transaction
+	if !containsSignatureFromOutputAddress {
+		// no signature in the transaction matches the output address =>  not a valid voting transaction
 		//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil, nil
 	}
