@@ -853,7 +853,7 @@ func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iota
 	}
 
 	if !containsSignatureFromOutputAddress {
-		// no input address match the output address =>  not a valid voting transaction
+		// no signature in the transaction matches the output address =>  not a valid voting transaction
 		//nolint:nilnil // nil, nil, nil is ok in this context, even if it is not go idiomatic
 		return nil, nil, nil
 	}
