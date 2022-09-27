@@ -5,18 +5,11 @@ module.exports = {
         [
             '@docusaurus/plugin-content-docs',
             {
-                id: 'inx-participation-develop',
+                id: 'inx-participation',
                 path: path.resolve(__dirname, 'docs'),
                 routeBasePath: 'inx-participation',
                 sidebarPath: path.resolve(__dirname, 'sidebars.js'),
                 editUrl: 'https://github.com/iotaledger/inx-participation/edit/develop/documentation',
-                versions: {
-                    current: {
-                        label: 'Develop',
-                        path: 'develop',
-                        badge: true
-                    },
-                },
             }
         ],
     ],
