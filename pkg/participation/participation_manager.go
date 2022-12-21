@@ -889,3 +889,37 @@ func filterEvents(events map[EventID]*Event, index iotago.MilestoneIndex, includ
 
 	return filtered
 }
+
+func (pm *Manager) AnswersForTrackedParticipation(trackedParticipation *TrackedParticipation) ([]byte, error) {
+	blockForEvent, err := pm.BlockForEventAndBlockID(trackedParticipation.EventID, trackedParticipation.BlockID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch block for tracked participation, eventID: %s, blockID: %s, error: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
+	}
+
+	if blockForEvent == nil {
+		return nil, fmt.Errorf("block for tracked participation not found, eventID: %s, blockID: %s", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+	}
+
+	txEssenceTaggedData := blockForEvent.TransactionEssenceTaggedData()
+	if txEssenceTaggedData == nil {
+		// we only store blocks that contain a valid transaction essence payload with tagged data anyway,
+		// but its ok to check again here
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: no transaction essence tagged data payload found", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+	}
+
+	participations, err := participationFromTaggedData(txEssenceTaggedData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
+	}
+
+	for _, participation := range participations {
+		if participation.EventID != trackedParticipation.EventID {
+			continue
+		}
+
+		// found the correct event ID, return the answers
+		return participation.Answers, nil
+	}
+
+	return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: tracked participation not found in transaction essence tagged data payload", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+}

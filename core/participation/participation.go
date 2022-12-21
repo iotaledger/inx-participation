@@ -9,6 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 
+	"github.com/iotaledger/hive.go/core/generics/lo"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	"github.com/iotaledger/inx-app/httpserver"
 	"github.com/iotaledger/inx-participation/pkg/participation"
@@ -209,11 +210,17 @@ func getOutputStatus(c echo.Context) (*OutputStatusResponse, error) {
 	}
 
 	for _, trackedParticipation := range trackedParticipations {
+		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
+		if err != nil {
+			return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+		}
+
 		t := &TrackedParticipation{
 			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
+			Answers:             lo.Map(answers, func(answer byte) int { return int(answer) }),
 		}
 		response.Participations[trackedParticipation.EventID.ToHex()] = t
 	}
@@ -292,12 +299,17 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 			return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching outputs: %s", err)
 		}
 		for _, trackedParticipation := range participations {
+			answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
+			if err != nil {
+				return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			}
 
 			t := &TrackedParticipation{
 				BlockID:             trackedParticipation.BlockID.ToHex(),
 				Amount:              trackedParticipation.Amount,
 				StartMilestoneIndex: trackedParticipation.StartIndex,
 				EndMilestoneIndex:   trackedParticipation.EndIndex,
+				Answers:             lo.Map(answers, func(answer byte) int { return int(answer) }),
 			}
 			outputResponse := response.Outputs[trackedParticipation.OutputID.ToHex()]
 			if outputResponse == nil {
@@ -313,6 +325,7 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 	return response, nil
 }
 
+//nolint:dupl
 func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	eventID, err := parseEventIDParam(c)
 	if err != nil {
@@ -322,12 +335,21 @@ func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	response := &ParticipationsResponse{
 		Participations: make(map[string]*TrackedParticipation),
 	}
+
+	var innerErr error
 	if err := deps.ParticipationManager.ForEachActiveParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
+		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
+		if err != nil {
+			innerErr = errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for active participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			return false
+		}
+
 		t := &TrackedParticipation{
 			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
+			Answers:             lo.Map(answers, func(answer byte) int { return int(answer) }),
 		}
 		response.Participations[trackedParticipation.OutputID.ToHex()] = t
 
@@ -335,10 +357,14 @@ func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	}); err != nil {
 		return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching active participations: %s", err)
 	}
+	if innerErr != nil {
+		return nil, innerErr
+	}
 
 	return response, nil
 }
 
+//nolint:dupl
 func getPastParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	eventID, err := parseEventIDParam(c)
 	if err != nil {
@@ -348,18 +374,30 @@ func getPastParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	response := &ParticipationsResponse{
 		Participations: make(map[string]*TrackedParticipation),
 	}
+
+	var innerErr error
 	if err := deps.ParticipationManager.ForEachPastParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
+		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
+		if err != nil {
+			innerErr = errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for past participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			return false
+		}
+
 		t := &TrackedParticipation{
 			BlockID:             trackedParticipation.BlockID.ToHex(),
 			Amount:              trackedParticipation.Amount,
 			StartMilestoneIndex: trackedParticipation.StartIndex,
 			EndMilestoneIndex:   trackedParticipation.EndIndex,
+			Answers:             lo.Map(answers, func(answer byte) int { return int(answer) }),
 		}
 		response.Participations[trackedParticipation.OutputID.ToHex()] = t
 
 		return true
 	}); err != nil {
 		return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching past participations: %s", err)
+	}
+	if innerErr != nil {
+		return nil, innerErr
 	}
 
 	return response, nil

@@ -26,6 +26,8 @@ type TrackedParticipation struct {
 	StartMilestoneIndex iotago.MilestoneIndex `json:"startMilestoneIndex"`
 	// EndMilestoneIndex is the milestone index the participation ended. 0 if the participation is still active.
 	EndMilestoneIndex iotago.MilestoneIndex `json:"endMilestoneIndex"`
+	// Answers holds the IDs of the answers to the questions of a ballot.
+	Answers []int `json:"answers,omitempty"`
 }
 
 // OutputStatusResponse defines the response of a GET RouteOutputStatus REST API call.
