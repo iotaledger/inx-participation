@@ -24,8 +24,8 @@ func (o *ParticipationOutput) serializedAddressBytes() ([]byte, error) {
 	return o.Address.Serialize(serializer.DeSeriModeNoValidation, nil)
 }
 
-func (msg *ParticipationBlock) Transaction() *iotago.Transaction {
-	switch payload := msg.Block.Payload.(type) {
+func (b *ParticipationBlock) Transaction() *iotago.Transaction {
+	switch payload := b.Block.Payload.(type) {
 	case *iotago.Transaction:
 		return payload
 	default:
@@ -33,16 +33,16 @@ func (msg *ParticipationBlock) Transaction() *iotago.Transaction {
 	}
 }
 
-func (msg *ParticipationBlock) TransactionEssence() *iotago.TransactionEssence {
-	if transaction := msg.Transaction(); transaction != nil {
+func (b *ParticipationBlock) TransactionEssence() *iotago.TransactionEssence {
+	if transaction := b.Transaction(); transaction != nil {
 		return transaction.Essence
 	}
 
 	return nil
 }
 
-func (msg *ParticipationBlock) TransactionEssenceTaggedData() *iotago.TaggedData {
-	if essence := msg.TransactionEssence(); essence != nil {
+func (b *ParticipationBlock) TransactionEssenceTaggedData() *iotago.TaggedData {
+	if essence := b.TransactionEssence(); essence != nil {
 		switch payload := essence.Payload.(type) {
 		case *iotago.TaggedData:
 			return payload
@@ -54,9 +54,9 @@ func (msg *ParticipationBlock) TransactionEssenceTaggedData() *iotago.TaggedData
 	return nil
 }
 
-func (msg *ParticipationBlock) TransactionEssenceUTXOInputs() iotago.OutputIDs {
+func (b *ParticipationBlock) TransactionEssenceUTXOInputs() iotago.OutputIDs {
 	var inputs iotago.OutputIDs
-	if essence := msg.TransactionEssence(); essence != nil {
+	if essence := b.TransactionEssence(); essence != nil {
 		for _, input := range essence.Inputs {
 			switch utxoInput := input.(type) {
 			case *iotago.UTXOInput:

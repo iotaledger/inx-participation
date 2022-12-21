@@ -525,7 +525,7 @@ func (pm *Manager) applyNewUTXOForEvents(index iotago.MilestoneIndex, newOutput 
 func (pm *Manager) applySpentUTXOForEvents(index iotago.MilestoneIndex, spent *ParticipationOutput, events map[EventID]*Event) error {
 
 	// Fetch the block, this must have been stored for at least one of the events
-	var msg *ParticipationBlock
+	var block *ParticipationBlock
 	for eID := range events {
 		// Check if we tracked the participation initially, event.g. saved the Block that created this UTXO
 		blockForEvent, err := pm.BlockForEventAndBlockID(eID, spent.BlockID)
@@ -533,18 +533,18 @@ func (pm *Manager) applySpentUTXOForEvents(index iotago.MilestoneIndex, spent *P
 			return err
 		}
 		if blockForEvent != nil {
-			msg = blockForEvent
+			block = blockForEvent
 
 			break
 		}
 	}
 
-	if msg == nil {
+	if block == nil {
 		// This UTXO had no valid participation, so we did not store the block for it
 		return nil
 	}
 
-	txEssenceTaggedData := msg.TransactionEssenceTaggedData()
+	txEssenceTaggedData := block.TransactionEssenceTaggedData()
 	if txEssenceTaggedData == nil {
 		// We tracked this participation before, and now we don't have its taggedData, so something happened
 		return ErrInvalidPreviouslyTrackedParticipation
@@ -787,21 +787,21 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 	return votes, nil
 }
 
-func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iotago.MilestoneIndex) (*ParticipationOutput, []*Participation, error) {
-	transaction := msg.Transaction()
+func (pm *Manager) ParticipationsFromBlock(block *ParticipationBlock, msIndex iotago.MilestoneIndex) (*ParticipationOutput, []*Participation, error) {
+	transaction := block.Transaction()
 	if transaction == nil {
 		// Do not handle outputs from migrations
 		// This output was created by a migration in a milestone payload.
 		return nil, nil, nil
 	}
 
-	txEssence := msg.TransactionEssence()
+	txEssence := block.TransactionEssence()
 	if txEssence == nil {
 		// if the block was included, there must be a transaction payload essence
 		return nil, nil, errors.New("no transaction transactionEssence found")
 	}
 
-	txEssenceTaggedData := msg.TransactionEssenceTaggedData()
+	txEssenceTaggedData := block.TransactionEssenceTaggedData()
 	if txEssenceTaggedData == nil {
 		// no need to check if there is not taggedData payload
 		return nil, nil, nil
@@ -872,7 +872,7 @@ func (pm *Manager) ParticipationsFromBlock(msg *ParticipationBlock, msIndex iota
 	outputID := iotago.OutputIDFromTransactionIDAndIndex(txID, 0)
 
 	return &ParticipationOutput{
-		BlockID:  msg.BlockID,
+		BlockID:  block.BlockID,
 		OutputID: outputID,
 		Address:  depositOutput.UnlockConditionSet().Address().Address,
 		Deposit:  depositOutput.Deposit(),
@@ -888,4 +888,38 @@ func filterEvents(events map[EventID]*Event, index iotago.MilestoneIndex, includ
 	}
 
 	return filtered
+}
+
+func (pm *Manager) AnswersForTrackedParticipation(trackedParticipation *TrackedParticipation) ([]byte, error) {
+	blockForEvent, err := pm.BlockForEventAndBlockID(trackedParticipation.EventID, trackedParticipation.BlockID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: failed to fetch block: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
+	}
+
+	if blockForEvent == nil {
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: block not found", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+	}
+
+	txEssenceTaggedData := blockForEvent.TransactionEssenceTaggedData()
+	if txEssenceTaggedData == nil {
+		// we only store blocks that contain a valid transaction essence payload with tagged data anyway,
+		// but its ok to check again here
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: no transaction essence tagged data payload found", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+	}
+
+	participations, err := participationFromTaggedData(txEssenceTaggedData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
+	}
+
+	for _, participation := range participations {
+		if participation.EventID != trackedParticipation.EventID {
+			continue
+		}
+
+		// found the correct event ID, return the answers
+		return participation.Answers, nil
+	}
+
+	return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: tracked participation not found in transaction essence tagged data payload", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
 }

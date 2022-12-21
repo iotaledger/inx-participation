@@ -72,7 +72,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 	}
 
 	// Fund Wallet1
-	messageA := te.NewBlockBuilder("A").
+	blockA := te.NewBlockBuilder("A").
 		Parents(te.LastMilestoneParents()).
 		FromWallet(genesisWallet).
 		Amount(wallet1Balance).
@@ -81,8 +81,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet2
-	messageB := te.NewBlockBuilder("B").
-		Parents(append(te.LastMilestoneParents(), messageA.StoredBlockID())).
+	blockB := te.NewBlockBuilder("B").
+		Parents(append(te.LastMilestoneParents(), blockA.StoredBlockID())).
 		FromWallet(genesisWallet).
 		Amount(wallet2Balance).
 		BuildTransactionToWallet(seed2Wallet).
@@ -90,8 +90,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet3
-	messageC := te.NewBlockBuilder("C").
-		Parents(append(te.LastMilestoneParents(), messageB.StoredBlockID())).
+	blockC := te.NewBlockBuilder("C").
+		Parents(append(te.LastMilestoneParents(), blockB.StoredBlockID())).
 		FromWallet(genesisWallet).
 		Amount(wallet3Balance).
 		BuildTransactionToWallet(seed3Wallet).
@@ -99,8 +99,8 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Fund Wallet4
-	messageD := te.NewBlockBuilder("D").
-		Parents(append(te.LastMilestoneParents(), messageC.StoredBlockID())).
+	blockD := te.NewBlockBuilder("D").
+		Parents(append(te.LastMilestoneParents(), blockC.StoredBlockID())).
 		FromWallet(genesisWallet).
 		Amount(wallet4Balance).
 		BuildTransactionToWallet(seed4Wallet).
@@ -108,7 +108,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		BookOnWallets()
 
 	// Confirming milestone at block D
-	_, confStats := te.IssueAndConfirmMilestoneOnTips(iotago.BlockIDs{messageD.StoredBlockID()}, false)
+	_, confStats := te.IssueAndConfirmMilestoneOnTips(iotago.BlockIDs{blockD.StoredBlockID()}, false)
 	if assertSteps {
 
 		require.Equal(t, 4+1, confStats.BlocksReferenced) // 4 + milestone itself
@@ -497,10 +497,10 @@ func (env *ParticipationTestEnv) AssertWalletBalance(wallet *utils.HDWallet, exp
 	env.te.AssertWalletBalance(wallet, expectedBalance)
 }
 
-func ParticipationBlockFromBlock(msg *storage.Block) *participation.ParticipationBlock {
+func ParticipationBlockFromBlock(block *storage.Block) *participation.ParticipationBlock {
 	return &participation.ParticipationBlock{
-		BlockID: msg.BlockID(),
-		Block:   msg.Block(),
-		Data:    msg.Data(),
+		BlockID: block.BlockID(),
+		Block:   block.Block(),
+		Data:    block.Data(),
 	}
 }

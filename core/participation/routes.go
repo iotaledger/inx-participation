@@ -24,7 +24,7 @@ const (
 	RouteParticipationEventStatus = "/events/:" + ParameterParticipationEventID + "/status"
 
 	// RouteOutputStatus is the route to get the vote status for a given outputID.
-	// GET returns the messageID the participation was included, the starting and ending milestone index this participation was tracked.
+	// GET returns the blockID the participation was included, the starting and ending milestone index this participation was tracked.
 	RouteOutputStatus = "/outputs/:" + ParameterOutputID
 
 	// RouteAddressBech32Status is the route to get the staking rewards for the given bech32 address.
