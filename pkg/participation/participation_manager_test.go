@@ -156,7 +156,7 @@ func TestTaggedDataPayloads(t *testing.T) {
 
 	eventID := RandEventID()
 
-	okMessage := env.NewParticipationHelper(env.Wallet1).
+	okBlock := env.NewParticipationHelper(env.Wallet1).
 		WholeWalletBalance().
 		AddParticipation(&participation.Participation{
 			EventID: eventID,
@@ -164,20 +164,20 @@ func TestTaggedDataPayloads(t *testing.T) {
 		}).
 		Build()
 
-	noTaggedDataMessage := env.NewBlockBuilder().
+	noTaggedDataBlock := env.NewBlockBuilder().
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		BuildTransactionToWallet(env.Wallet2)
 
-	invalidPayloadMessage := env.NewBlockBuilder(test.ParticipationTag).
+	invalidPayloadBlock := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		TagData([]byte{0}).
 		BuildTransactionToWallet(env.Wallet2)
 
-	emptyTaggedDataMessage := env.NewBlockBuilder(test.ParticipationTag).
+	emptyTaggedDataBlock := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
@@ -193,14 +193,14 @@ func TestTaggedDataPayloads(t *testing.T) {
 	participationsData, err := participations.Serialize(serializer.DeSeriModePerformValidation, nil)
 	require.NoError(t, err)
 
-	wrongAddressMessage := env.NewBlockBuilder(test.ParticipationTag).
+	wrongAddressBlock := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(env.Wallet2.Balance()).
 		TagData(participationsData).
 		BuildTransactionToWallet(env.Wallet3)
 
-	multipleOutputsMessage := env.NewBlockBuilder(test.ParticipationTag).
+	multipleOutputsBlock := env.NewBlockBuilder(test.ParticipationTag).
 		LatestMilestoneAsParents().
 		FromWallet(env.Wallet2).
 		Amount(10_000_000).
@@ -221,10 +221,10 @@ func TestTaggedDataPayloads(t *testing.T) {
 	blockBuilder := txBuilder.BuildAndSwapToBlockBuilder(env.ProtocolParameters(), inputAddrSigner, nil)
 	blockBuilder.Parents(env.LastMilestoneParents())
 
-	msg, err := blockBuilder.Build()
+	block, err := blockBuilder.Build()
 	require.NoError(t, err)
 	// Skipped PoW since we are not validating it anyway
-	sweepAndParticipateMessage, err := storage.NewBlock(msg, serializer.DeSeriModePerformValidation, env.ProtocolParameters())
+	sweepAndParticipateBlock, err := storage.NewBlock(block, serializer.DeSeriModePerformValidation, env.ProtocolParameters())
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -233,13 +233,13 @@ func TestTaggedDataPayloads(t *testing.T) {
 		outputExists        bool
 		participationsCount int
 	}{
-		{"ok", okMessage.StoredBlock(), true, 1},
-		{"sweep and participate", sweepAndParticipateMessage, true, 1},
-		{"no tag", noTaggedDataMessage.StoredBlock(), false, 0},
-		{"invalid payload", invalidPayloadMessage.StoredBlock(), false, 0},
-		{"empty tag", emptyTaggedDataMessage.StoredBlock(), false, 0},
-		{"wrong address", wrongAddressMessage.StoredBlock(), false, 0},
-		{"multiple outputs", multipleOutputsMessage.StoredBlock(), false, 0},
+		{"ok", okBlock.StoredBlock(), true, 1},
+		{"sweep and participate", sweepAndParticipateBlock, true, 1},
+		{"no tag", noTaggedDataBlock.StoredBlock(), false, 0},
+		{"invalid payload", invalidPayloadBlock.StoredBlock(), false, 0},
+		{"empty tag", emptyTaggedDataBlock.StoredBlock(), false, 0},
+		{"wrong address", wrongAddressBlock.StoredBlock(), false, 0},
+		{"multiple outputs", multipleOutputsBlock.StoredBlock(), false, 0},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -351,11 +351,11 @@ func TestSingleBallotVote(t *testing.T) {
 	require.Equal(t, iotago.MilestoneIndex(6), trackedVote.StartIndex)
 	require.Equal(t, iotago.MilestoneIndex(11), trackedVote.EndIndex)
 
-	var messageFromParticipationStore *participation.ParticipationBlock
-	messageFromParticipationStore, err = env.ParticipationManager().BlockForEventAndBlockID(eventID, trackedVote.BlockID)
+	var blockFromParticipationStore *participation.ParticipationBlock
+	blockFromParticipationStore, err = env.ParticipationManager().BlockForEventAndBlockID(eventID, trackedVote.BlockID)
 	require.NoError(t, err)
-	require.NotNil(t, messageFromParticipationStore)
-	require.Equal(t, messageFromParticipationStore.Block, castVote.Block().IotaBlock())
+	require.NotNil(t, blockFromParticipationStore)
+	require.Equal(t, blockFromParticipationStore.Block, castVote.Block().IotaBlock())
 }
 
 func TestInvalidVoteHandling(t *testing.T) {
@@ -470,8 +470,8 @@ func TestBallotVoteCancel(t *testing.T) {
 	env.AssertDefaultBallotAnswerStatus(eventID, 1_000, 0)
 
 	// Cancel vote
-	cancelVote1Msg := env.CancelParticipations(env.Wallet1)
-	env.IssueMilestone(append(env.LastMilestoneParents(), cancelVote1Msg.StoredBlockID())...) // 7
+	cancelVote1Block := env.CancelParticipations(env.Wallet1)
+	env.IssueMilestone(append(env.LastMilestoneParents(), cancelVote1Block.StoredBlockID())...) // 7
 
 	// Verify vote
 	env.AssertDefaultBallotAnswerStatus(eventID, 0, 0)
@@ -483,8 +483,8 @@ func TestBallotVoteCancel(t *testing.T) {
 	env.AssertDefaultBallotAnswerStatus(eventID, 1_000, 1_000)
 
 	// Cancel vote
-	cancelVote2Msg := env.CancelParticipations(env.Wallet1)
-	env.IssueMilestone(append(env.LastMilestoneParents(), cancelVote2Msg.StoredBlockID())...) // 9
+	cancelVote2Block := env.CancelParticipations(env.Wallet1)
+	env.IssueMilestone(append(env.LastMilestoneParents(), cancelVote2Block.StoredBlockID())...) // 9
 
 	// Verify vote
 	env.AssertDefaultBallotAnswerStatus(eventID, 0, 1_000)
