@@ -281,7 +281,7 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 		return nil, err
 	}
 
-	eventIDs := deps.ParticipationManager.EventIDs(participation.StakingPayloadTypeID)
+	eventIDs := deps.ParticipationManager.EventIDs()
 
 	response := &AddressOutputsResponse{
 		Outputs: make(map[string]*OutputStatusResponse),
