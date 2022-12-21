@@ -893,11 +893,11 @@ func filterEvents(events map[EventID]*Event, index iotago.MilestoneIndex, includ
 func (pm *Manager) AnswersForTrackedParticipation(trackedParticipation *TrackedParticipation) ([]byte, error) {
 	blockForEvent, err := pm.BlockForEventAndBlockID(trackedParticipation.EventID, trackedParticipation.BlockID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch block for tracked participation, eventID: %s, blockID: %s, error: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: failed to fetch block: %w", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex(), err)
 	}
 
 	if blockForEvent == nil {
-		return nil, fmt.Errorf("block for tracked participation not found, eventID: %s, blockID: %s", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
+		return nil, fmt.Errorf("failed to fetch answers for tracked participation, eventID: %s, blockID: %s, error: block not found", trackedParticipation.EventID.ToHex(), trackedParticipation.BlockID.ToHex())
 	}
 
 	txEssenceTaggedData := blockForEvent.TransactionEssenceTaggedData()

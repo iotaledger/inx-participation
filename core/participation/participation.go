@@ -212,7 +212,7 @@ func getOutputStatus(c echo.Context) (*OutputStatusResponse, error) {
 	for _, trackedParticipation := range trackedParticipations {
 		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
 		if err != nil {
-			return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			return nil, errors.WithMessage(echo.ErrInternalServerError, err.Error())
 		}
 
 		t := &TrackedParticipation{
@@ -301,7 +301,7 @@ func getOutputsByAddress(c echo.Context) (*AddressOutputsResponse, error) {
 		for _, trackedParticipation := range participations {
 			answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
 			if err != nil {
-				return nil, errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+				return nil, errors.WithMessage(echo.ErrInternalServerError, err.Error())
 			}
 
 			t := &TrackedParticipation{
@@ -340,7 +340,7 @@ func getActiveParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	if err := deps.ParticipationManager.ForEachActiveParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
 		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
 		if err != nil {
-			innerErr = errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for active participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			innerErr = errors.WithMessage(echo.ErrInternalServerError, err.Error())
 			return false
 		}
 
@@ -379,7 +379,7 @@ func getPastParticipations(c echo.Context) (*ParticipationsResponse, error) {
 	if err := deps.ParticipationManager.ForEachPastParticipation(eventID, func(trackedParticipation *participation.TrackedParticipation) bool {
 		answers, err := deps.ParticipationManager.AnswersForTrackedParticipation(trackedParticipation)
 		if err != nil {
-			innerErr = errors.WithMessagef(echo.ErrInternalServerError, "error fetching answers for past participation, eventID %s: %s", trackedParticipation.EventID.ToHex(), err)
+			innerErr = errors.WithMessage(echo.ErrInternalServerError, err.Error())
 			return false
 		}
 
