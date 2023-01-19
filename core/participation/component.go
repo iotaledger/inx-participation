@@ -10,9 +10,10 @@ import (
 
 	"github.com/iotaledger/hive.go/core/app"
 	"github.com/iotaledger/hive.go/core/app/pkg/shutdown"
-	"github.com/iotaledger/hornet/v2/pkg/database"
-	"github.com/iotaledger/inx-app/httpserver"
-	"github.com/iotaledger/inx-app/nodebridge"
+	"github.com/iotaledger/hive.go/core/database"
+	hornetdb "github.com/iotaledger/hornet/v2/pkg/database"
+	"github.com/iotaledger/inx-app/pkg/httpserver"
+	"github.com/iotaledger/inx-app/pkg/nodebridge"
 	"github.com/iotaledger/inx-participation/pkg/daemon"
 	"github.com/iotaledger/inx-participation/pkg/participation"
 	iotago "github.com/iotaledger/iota.go/v3"
@@ -57,7 +58,7 @@ func provide(c *dig.Container) error {
 			CoreComponent.LogErrorAndExit(err)
 		}
 
-		participationStore, err := database.StoreWithDefaultSettings(ParamsParticipation.Database.Path, true, dbEngine)
+		participationStore, err := hornetdb.StoreWithDefaultSettings(ParamsParticipation.Database.Path, true, dbEngine)
 		if err != nil {
 			CoreComponent.LogErrorAndExit(err)
 		}

@@ -11,8 +11,11 @@ import (
 	"github.com/iotaledger/hive.go/core/kvstore"
 	"github.com/iotaledger/hive.go/core/syncutils"
 	"github.com/iotaledger/hive.go/serializer/v2"
-	"github.com/iotaledger/hornet/v2/pkg/model/storage"
 	iotago "github.com/iotaledger/iota.go/v3"
+)
+
+const (
+	StorePrefixHealth byte = 255
 )
 
 var (
@@ -47,7 +50,7 @@ type Manager struct {
 	opts *Options
 
 	participationStore       kvstore.KVStore
-	participationStoreHealth *storage.StoreHealthTracker
+	participationStoreHealth *kvstore.StoreHealthTracker
 
 	events map[EventID]*Event
 }
@@ -95,7 +98,7 @@ func NewManager(
 	options.apply(defaultOptions...)
 	options.apply(opts...)
 
-	healthTracker, err := storage.NewStoreHealthTracker(participationStore, DBVersionParticipation)
+	healthTracker, err := kvstore.NewStoreHealthTracker(participationStore, []byte{StorePrefixHealth}, DBVersionParticipation, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -130,13 +133,13 @@ func (pm *Manager) init() error {
 		return ErrParticipationCorruptedStorage
 	}
 
-	correctDatabasesVersion, err := pm.participationStoreHealth.CheckCorrectDatabaseVersion()
+	correctDatabasesVersion, err := pm.participationStoreHealth.CheckCorrectStoreVersion()
 	if err != nil {
 		return err
 	}
 
 	if !correctDatabasesVersion {
-		databaseVersionUpdated, err := pm.participationStoreHealth.UpdateDatabaseVersion()
+		databaseVersionUpdated, err := pm.participationStoreHealth.UpdateStoreVersion()
 		if err != nil {
 			return err
 		}
