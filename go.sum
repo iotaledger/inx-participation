@@ -275,8 +275,8 @@ github.com/iotaledger/hornet/v2 v2.0.0-rc.5 h1:ZIi5+xAvJUQM4MZhxvM8c3rImwsVmx33d
 github.com/iotaledger/hornet/v2 v2.0.0-rc.5/go.mod h1:InCzdE7egn4AXSvbSert+L3a2xHKCTOe6ZJH1phBJAk=
 github.com/iotaledger/inx-app v1.0.0-rc.2 h1:trDAFS7vtFoqxU43ty5Sh0uRFLgfIgFPUG9xjAE4vn0=
 github.com/iotaledger/inx-app v1.0.0-rc.2/go.mod h1:HQL+g5k4VHkEF/jB/P8pS+DHYwFjDbmgE4W5m9PuwEA=
-github.com/iotaledger/inx/go v1.0.0-rc.1 h1:BCLPHP+GiC99tVKvaiw0BMn4+Tv6VBNSAusJjFN1MuA=
-github.com/iotaledger/inx/go v1.0.0-rc.1/go.mod h1:avAlMHmwcXsyOIIQ6sskA3b1K28Yew7O/iDmDcCQjCo=
+github.com/iotaledger/inx/go v1.0.0-rc.2 h1:SjHGHQ1pEe7/B0bnVIHCa1zQBvcC0QRwcYPzUGarrJU=
+github.com/iotaledger/inx/go v1.0.0-rc.2/go.mod h1:PYijAQs5lgAzLENkpvdSoLM8Iq4KAg+CdU5Smxj01lI=
 github.com/iotaledger/iota.go v1.0.0 h1:tqm1FxJ/zOdzbrAaQ5BQpVF8dUy2eeGlSeWlNG8GoXY=
 github.com/iotaledger/iota.go v1.0.0/go.mod h1:RiKYwDyY7aCD1L0YRzHSjOsJ5mUR9yvQpvhZncNcGQI=
 github.com/iotaledger/iota.go/v3 v3.0.0-rc.2 h1:WuMlZ/ba+ZJHSQ6OEOId0rIk4ixZGKa62/v9d67+MHk=
