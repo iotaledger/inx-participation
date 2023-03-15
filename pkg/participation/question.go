@@ -11,7 +11,7 @@ const (
 	QuestionTextMaxLength           = 255
 	QuestionAdditionalInfoMaxLength = 500
 
-	QuestionMinAnswersCount = 2
+	QuestionMinAnswersCount = 1
 	QuestionMaxAnswersCount = 10
 )
 
