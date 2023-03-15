@@ -3,7 +3,7 @@ module github.com/iotaledger/inx-participation
 go 1.19
 
 require (
-	github.com/iotaledger/hive.go/core v1.0.0-rc.2
+	github.com/iotaledger/hive.go/core v1.0.0-rc.3
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1
 	github.com/iotaledger/hornet/v2 v2.0.0-rc.5
 	github.com/iotaledger/inx-app v1.0.0-rc.2
