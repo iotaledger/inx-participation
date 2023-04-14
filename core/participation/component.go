@@ -3,14 +3,16 @@ package participation
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"go.uber.org/dig"
 
-	"github.com/iotaledger/hive.go/core/app"
-	"github.com/iotaledger/hive.go/core/app/pkg/shutdown"
-	"github.com/iotaledger/hive.go/core/database"
+	"github.com/iotaledger/hive.go/app"
+	"github.com/iotaledger/hive.go/app/shutdown"
+	"github.com/iotaledger/hive.go/kvstore/database"
+	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	hornetdb "github.com/iotaledger/hornet/v2/pkg/database"
 	"github.com/iotaledger/inx-app/pkg/httpserver"
 	"github.com/iotaledger/inx-app/pkg/nodebridge"
@@ -19,22 +21,29 @@ import (
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
+var (
+	AllowedEnginesStorage = []hivedb.Engine{
+		hivedb.EnginePebble,
+		hivedb.EngineRocksDB,
+	}
+
+	AllowedEnginesStorageAuto = append(AllowedEnginesStorage, hivedb.EngineAuto)
+)
+
 func init() {
-	CoreComponent = &app.CoreComponent{
-		Component: &app.Component{
-			Name:      "Participation",
-			Params:    params,
-			DepsFunc:  func(cDeps dependencies) { deps = cDeps },
-			Provide:   provide,
-			Configure: configure,
-			Run:       run,
-		},
+	Component = &app.Component{
+		Name:      "Participation",
+		Params:    params,
+		DepsFunc:  func(cDeps dependencies) { deps = cDeps },
+		Provide:   provide,
+		Configure: configure,
+		Run:       run,
 	}
 }
 
 var (
-	CoreComponent *app.CoreComponent
-	deps          dependencies
+	Component *app.Component
+	deps      dependencies
 )
 
 type dependencies struct {
@@ -53,18 +62,18 @@ func provide(c *dig.Container) error {
 
 	return c.Provide(func(deps participationDeps) *participation.Manager {
 
-		dbEngine, err := database.EngineFromStringAllowed(ParamsParticipation.Database.Engine)
+		dbEngine, err := database.EngineFromStringAllowed(ParamsParticipation.Database.Engine, AllowedEnginesStorageAuto)
 		if err != nil {
-			CoreComponent.LogErrorAndExit(err)
+			Component.LogErrorAndExit(err)
 		}
 
 		participationStore, err := hornetdb.StoreWithDefaultSettings(ParamsParticipation.Database.Path, true, dbEngine)
 		if err != nil {
-			CoreComponent.LogErrorAndExit(err)
+			Component.LogErrorAndExit(err)
 		}
 
 		pm, err := participation.NewManager(
-			CoreComponent.Daemon().ContextStopped(),
+			Component.Daemon().ContextStopped(),
 			participationStore,
 			deps.NodeBridge.ProtocolParameters,
 			NodeStatus,
@@ -73,25 +82,25 @@ func provide(c *dig.Container) error {
 			LedgerUpdates,
 		)
 		if err != nil {
-			CoreComponent.LogErrorAndExit(err)
+			Component.LogErrorAndExit(err)
 		}
-		CoreComponent.LogInfof("Initialized ParticipationManager at milestone %d", pm.LedgerIndex())
+		Component.LogInfof("Initialized ParticipationManager at milestone %d", pm.LedgerIndex())
 
 		return pm
 	})
 }
 
 func configure() error {
-	if err := CoreComponent.App().Daemon().BackgroundWorker("Close Participation database", func(ctx context.Context) {
+	if err := Component.App().Daemon().BackgroundWorker("Close Participation database", func(ctx context.Context) {
 		<-ctx.Done()
 
-		CoreComponent.LogInfo("Syncing Participation database to disk ...")
+		Component.LogInfo("Syncing Participation database to disk ...")
 		if err := deps.ParticipationManager.CloseDatabase(); err != nil {
-			CoreComponent.LogErrorfAndExit("Syncing Participation database to disk ... failed: %s", err)
+			Component.LogErrorfAndExit("Syncing Participation database to disk ... failed: %s", err)
 		}
-		CoreComponent.LogInfo("Syncing Participation database to disk ... done")
+		Component.LogInfo("Syncing Participation database to disk ... done")
 	}, daemon.PriorityCloseParticipationDatabase); err != nil {
-		CoreComponent.LogPanicf("failed to start worker: %s", err)
+		Component.LogPanicf("failed to start worker: %s", err)
 	}
 
 	return nil
@@ -99,8 +108,8 @@ func configure() error {
 
 func run() error {
 	// create a background worker that handles the participation events
-	if err := CoreComponent.Daemon().BackgroundWorker("LedgerUpdates", func(ctx context.Context) {
-		CoreComponent.LogInfo("Starting LedgerUpdates ... done")
+	if err := Component.Daemon().BackgroundWorker("LedgerUpdates", func(ctx context.Context) {
+		Component.LogInfo("Starting LedgerUpdates ... done")
 
 		startIndex := deps.ParticipationManager.LedgerIndex()
 		if startIndex > 0 {
@@ -110,36 +119,37 @@ func run() error {
 		if err := LedgerUpdates(ctx, startIndex, 0, func(index iotago.MilestoneIndex, created []*participation.ParticipationOutput, consumed []*participation.ParticipationOutput) error {
 			timeStart := time.Now()
 			if err := deps.ParticipationManager.ApplyNewLedgerUpdate(index, created, consumed); err != nil {
-				CoreComponent.LogErrorfAndExit("ApplyNewLedgerUpdate failed: %s", err)
+				Component.LogErrorfAndExit("ApplyNewLedgerUpdate failed: %s", err)
 
 				return err
 			}
-			CoreComponent.LogInfof("Applying milestone %d with %d new and %d outputs took %s", index, len(created), len(consumed), time.Since(timeStart).Truncate(time.Millisecond))
+			Component.LogInfof("Applying milestone %d with %d new and %d outputs took %s", index, len(created), len(consumed), time.Since(timeStart).Truncate(time.Millisecond))
 
 			return nil
 		}); err != nil {
-			CoreComponent.LogWarnf("Listening to LedgerUpdates failed: %s", err)
+			Component.LogWarnf("Listening to LedgerUpdates failed: %s", err)
 			deps.ShutdownHandler.SelfShutdown("disconnected from INX", false)
 		}
 
-		CoreComponent.LogInfo("Stopping LedgerUpdates ... done")
+		Component.LogInfo("Stopping LedgerUpdates ... done")
 	}, daemon.PriorityStopParticipation); err != nil {
-		CoreComponent.LogPanicf("failed to start worker: %s", err)
+		Component.LogPanicf("failed to start worker: %s", err)
 	}
 
 	// create a background worker that handles the API
-	if err := CoreComponent.Daemon().BackgroundWorker("API", func(ctx context.Context) {
-		CoreComponent.LogInfo("Starting API ... done")
+	if err := Component.Daemon().BackgroundWorker("API", func(ctx context.Context) {
+		Component.LogInfo("Starting API ... done")
 
-		CoreComponent.LogInfo("Starting API server ...")
+		Component.LogInfo("Starting API server ...")
 
-		e := httpserver.NewEcho(CoreComponent.Logger(), nil, ParamsRestAPI.DebugRequestLoggerEnabled)
+		e := httpserver.NewEcho(Component.Logger(), nil, ParamsRestAPI.DebugRequestLoggerEnabled)
 
-		setupRoutes(e)
+		setupRoutes(e.Group(APIRoute))
+
 		go func() {
-			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
+			Component.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
 			if err := e.Start(ParamsRestAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
-				CoreComponent.LogErrorfAndExit("Stopped REST-API server due to an error (%s)", err)
+				Component.LogErrorfAndExit("Stopped REST-API server due to an error (%s)", err)
 			}
 		}()
 
@@ -150,22 +160,24 @@ func run() error {
 			advertisedAddress = ParamsRestAPI.AdvertiseAddress
 		}
 
-		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, APIRoute, advertisedAddress); err != nil {
-			CoreComponent.LogErrorfAndExit("Registering INX api route failed: %s", err)
+		routeName := strings.Replace(APIRoute, "/api/", "", 1)
+
+		if err := deps.NodeBridge.RegisterAPIRoute(ctxRegister, routeName, advertisedAddress, APIRoute); err != nil {
+			Component.LogErrorfAndExit("Registering INX api route failed: %s", err)
 		}
 
 		cancelRegister()
 
-		CoreComponent.LogInfo("Starting API server ... done")
+		Component.LogInfo("Starting API server ... done")
 		<-ctx.Done()
-		CoreComponent.LogInfo("Stopping API ...")
+		Component.LogInfo("Stopping API ...")
 
 		ctxUnregister, cancelUnregister := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancelUnregister()
 
 		//nolint:contextcheck // false positive
-		if err := deps.NodeBridge.UnregisterAPIRoute(ctxUnregister, APIRoute); err != nil {
-			CoreComponent.LogWarnf("Unregistering INX api route failed: %s", err)
+		if err := deps.NodeBridge.UnregisterAPIRoute(ctxUnregister, routeName); err != nil {
+			Component.LogWarnf("Unregistering INX api route failed: %s", err)
 		}
 
 		shutdownCtx, shutdownCtxCancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -173,12 +185,12 @@ func run() error {
 
 		//nolint:contextcheck // false positive
 		if err := e.Shutdown(shutdownCtx); err != nil {
-			CoreComponent.LogWarn(err)
+			Component.LogWarn(err)
 		}
 
-		CoreComponent.LogInfo("Stopping API ... done")
+		Component.LogInfo("Stopping API ... done")
 	}, daemon.PriorityStopParticipationAPI); err != nil {
-		CoreComponent.LogPanicf("failed to start worker: %s", err)
+		Component.LogPanicf("failed to start worker: %s", err)
 	}
 
 	return nil
