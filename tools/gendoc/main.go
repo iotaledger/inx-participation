@@ -7,7 +7,7 @@ import (
 
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/apputils/config"
-	participationApp "github.com/iotaledger/inx-participation/core/app"
+	participationApp "github.com/iotaledger/inx-participation/components/app"
 )
 
 func createMarkdownFile(app *app.App, markdownHeaderPath string, markdownFilePath string, ignoreFlags map[string]struct{}, replaceTopicNames map[string]string) {
