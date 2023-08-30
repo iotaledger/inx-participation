@@ -18,8 +18,9 @@ require (
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cockroachdb/errors v1.11.1 // indirect
 	github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b // indirect
-	github.com/cockroachdb/pebble v0.0.0-20230412222916-60cfeb46143b // indirect
+	github.com/cockroachdb/pebble v0.0.0-20230803185510-83c9361c3b82 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
+	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eclipse/paho.mqtt.golang v1.4.3 // indirect
@@ -49,7 +50,7 @@ require (
 	github.com/iotaledger/hive.go/runtime v0.0.0-20230629181801-64c530ff9d15 // indirect
 	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1.0.20230629181801-64c530ff9d15 // indirect
 	github.com/iotaledger/hive.go/stringify v0.0.0-20230629181801-64c530ff9d15 // indirect
-	github.com/iotaledger/hornet/v2 v2.0.0-rc.4.0.20230417173501-030b126ffde1 // indirect
+	github.com/iotaledger/hornet/v2 v2.0.0-rc.8.0.20230830173644-b883585ad75c // indirect
 	github.com/iotaledger/inx-app v1.0.0-rc.3.0.20230417173151-cde47df5fe79 // indirect
 	github.com/iotaledger/inx/go v1.0.0-rc.2 // indirect
 	github.com/iotaledger/iota.go v1.0.0 // indirect
