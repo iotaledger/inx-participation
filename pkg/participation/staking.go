@@ -40,7 +40,7 @@ type Staking struct {
 	AdditionalInfo string
 }
 
-func (s *Staking) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (s *Staking) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, _ interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		Skip(serializer.TypeDenotationByteSize, func(err error) error {
 			return fmt.Errorf("unable to skip staking payload ID during deserialization: %w", err)
@@ -75,7 +75,7 @@ func (s *Staking) Deserialize(data []byte, deSeriMode serializer.DeSerialization
 		Done()
 }
 
-func (s *Staking) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (s *Staking) Serialize(deSeriMode serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {

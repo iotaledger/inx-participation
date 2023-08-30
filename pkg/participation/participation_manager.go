@@ -8,8 +8,8 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/iotaledger/hive.go/core/kvstore"
-	"github.com/iotaledger/hive.go/core/syncutils"
+	"github.com/iotaledger/hive.go/kvstore"
+	"github.com/iotaledger/hive.go/runtime/syncutils"
 	"github.com/iotaledger/hive.go/serializer/v2"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
@@ -27,7 +27,7 @@ var (
 )
 
 type ProtocolParametersProvider func() *iotago.ProtocolParameters
-type NodeStatusProvider func(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex)
+type NodeStatusProvider func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex)
 type BlockForBlockIDProvider func(ctx context.Context, blockID iotago.BlockID) (*ParticipationBlock, error)
 type OutputForOutputIDProvider func(ctx context.Context, outputID iotago.OutputID) (*ParticipationOutput, error)
 type LedgerUpdatesProvider func(ctx context.Context, startIndex iotago.MilestoneIndex, endIndex iotago.MilestoneIndex, handler func(index iotago.MilestoneIndex, created []*ParticipationOutput, consumed []*ParticipationOutput) error) error
@@ -269,11 +269,8 @@ func (pm *Manager) StoreEvent(event *Event) (EventID, error) {
 	pm.Lock()
 	defer pm.Unlock()
 
-	ctx, cancel := context.WithTimeout(pm.ctx, 5*time.Second)
-	defer cancel()
-
 	protoParas := pm.protocolParametersFunc()
-	confirmedIndex, pruningIndex := pm.nodeStatusFunc(ctx)
+	confirmedIndex, pruningIndex := pm.nodeStatusFunc()
 
 	eventID, err := event.ID()
 	if err != nil {
@@ -386,11 +383,7 @@ func (pm *Manager) calculatePastParticipationForEvent(event *Event) error {
 			}
 		}
 
-		if err := pm.applyNewConfirmedMilestoneIndexForEvents(index, events); err != nil {
-			return err
-		}
-
-		return nil
+		return pm.applyNewConfirmedMilestoneIndexForEvents(index, events)
 	})
 	if err != nil {
 		return err
@@ -428,11 +421,7 @@ func (pm *Manager) ApplyNewLedgerUpdate(index iotago.MilestoneIndex, created []*
 		}
 	}
 
-	if err := pm.applyNewConfirmedMilestoneIndexForEvents(index, acceptingEvents); err != nil {
-		return err
-	}
-
-	return nil
+	return pm.applyNewConfirmedMilestoneIndexForEvents(index, acceptingEvents)
 }
 
 // applyNewUTXOForEvents checks if the new UTXO is part of a participation transaction.
@@ -790,7 +779,7 @@ func participationFromTaggedData(taggedData *iotago.TaggedData) ([]*Participatio
 	return votes, nil
 }
 
-func (pm *Manager) ParticipationsFromBlock(block *ParticipationBlock, msIndex iotago.MilestoneIndex) (*ParticipationOutput, []*Participation, error) {
+func (pm *Manager) ParticipationsFromBlock(block *ParticipationBlock, _ iotago.MilestoneIndex) (*ParticipationOutput, []*Participation, error) {
 	transaction := block.Transaction()
 	if transaction == nil {
 		// Do not handle outputs from migrations

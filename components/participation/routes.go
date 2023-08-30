@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	APIRoute = "participation/v1"
+	APIRoute = "/api/participation/v1"
 
 	// RouteParticipationEvents is the route to list all events, returning their ID, the event name and status.
 	// GET returns a list of all events known to the node. Optional query parameter returns filters events by type (query parameters: "type").
@@ -66,9 +66,9 @@ const (
 	ParameterMilestoneIndex = "milestoneIndex"
 )
 
-func setupRoutes(e *echo.Echo) {
+func setupRoutes(group *echo.Group) {
 
-	e.GET(RouteParticipationEvents, func(c echo.Context) error {
+	group.GET(RouteParticipationEvents, func(c echo.Context) error {
 		resp, err := getEvents(c)
 		if err != nil {
 			return err
@@ -77,7 +77,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.POST(RouteAdminCreateEvent, func(c echo.Context) error {
+	group.POST(RouteAdminCreateEvent, func(c echo.Context) error {
 
 		resp, err := createEvent(c)
 		if err != nil {
@@ -89,7 +89,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})
 
-	e.GET(RouteParticipationEvent, func(c echo.Context) error {
+	group.GET(RouteParticipationEvent, func(c echo.Context) error {
 		resp, err := getEvent(c)
 		if err != nil {
 			return err
@@ -98,7 +98,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.DELETE(RouteAdminDeleteEvent, func(c echo.Context) error {
+	group.DELETE(RouteAdminDeleteEvent, func(c echo.Context) error {
 		if err := deleteEvent(c); err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func setupRoutes(e *echo.Echo) {
 		return c.NoContent(http.StatusNoContent)
 	})
 
-	e.GET(RouteParticipationEventStatus, func(c echo.Context) error {
+	group.GET(RouteParticipationEventStatus, func(c echo.Context) error {
 		resp, err := getEventStatus(c)
 		if err != nil {
 			return err
@@ -115,7 +115,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteOutputStatus, func(c echo.Context) error {
+	group.GET(RouteOutputStatus, func(c echo.Context) error {
 		resp, err := getOutputStatus(c)
 		if err != nil {
 			return err
@@ -124,7 +124,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteAddressBech32Status, func(c echo.Context) error {
+	group.GET(RouteAddressBech32Status, func(c echo.Context) error {
 		resp, err := getRewardsByAddress(c)
 		if err != nil {
 			return err
@@ -133,7 +133,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteAddressBech32Outputs, func(c echo.Context) error {
+	group.GET(RouteAddressBech32Outputs, func(c echo.Context) error {
 		resp, err := getOutputsByAddress(c)
 		if err != nil {
 			return err
@@ -142,7 +142,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteAdminActiveParticipations, func(c echo.Context) error {
+	group.GET(RouteAdminActiveParticipations, func(c echo.Context) error {
 		resp, err := getActiveParticipations(c)
 		if err != nil {
 			return err
@@ -151,7 +151,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteAdminPastParticipations, func(c echo.Context) error {
+	group.GET(RouteAdminPastParticipations, func(c echo.Context) error {
 		resp, err := getPastParticipations(c)
 		if err != nil {
 			return err
@@ -160,7 +160,7 @@ func setupRoutes(e *echo.Echo) {
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
 
-	e.GET(RouteAdminRewards, func(c echo.Context) error {
+	group.GET(RouteAdminRewards, func(c echo.Context) error {
 		resp, err := getRewards(c)
 		if err != nil {
 			return err

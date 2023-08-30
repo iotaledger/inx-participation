@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/apputils/config"
-	"github.com/iotaledger/hive.go/core/app"
-	participationApp "github.com/iotaledger/inx-participation/core/app"
+	participationApp "github.com/iotaledger/inx-participation/components/app"
 )
 
 func createMarkdownFile(app *app.App, markdownHeaderPath string, markdownFilePath string, ignoreFlags map[string]struct{}, replaceTopicNames map[string]string) {
@@ -70,7 +70,7 @@ func main() {
 	createMarkdownFile(
 		application,
 		"configuration_header.md",
-		"../../documentation/docs/configuration.md",
+		"../../configuration.md",
 		ignoreFlags,
 		replaceTopicNames,
 	)

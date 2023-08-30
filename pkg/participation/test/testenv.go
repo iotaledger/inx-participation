@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/iotaledger/hive.go/core/kvstore"
-	"github.com/iotaledger/hive.go/core/kvstore/mapdb"
+	"github.com/iotaledger/hive.go/kvstore"
+	"github.com/iotaledger/hive.go/kvstore/mapdb"
 	"github.com/iotaledger/hornet/v2/pkg/model/storage"
 	"github.com/iotaledger/hornet/v2/pkg/model/utxo"
 	"github.com/iotaledger/hornet/v2/pkg/testsuite"
@@ -132,7 +132,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func() *iotago.ProtocolParameters {
 			return te.ProtocolParameters()
 		},
-		func(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
+		func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
 		func(ctx context.Context, blockID iotago.BlockID) (*participation.ParticipationBlock, error) {

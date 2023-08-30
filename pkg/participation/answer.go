@@ -31,7 +31,7 @@ type Answer struct {
 	AdditionalInfo string
 }
 
-func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, _ interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		ReadNum(&a.Value, func(err error) error {
 			return fmt.Errorf("unable to deserialize participation answer value: %w", err)
@@ -54,7 +54,7 @@ func (a *Answer) Deserialize(data []byte, deSeriMode serializer.DeSerializationM
 		Done()
 }
 
-func (a *Answer) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (a *Answer) Serialize(deSeriMode serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		AbortIf(func(err error) error {
 			if deSeriMode.HasMode(serializer.DeSeriModePerformValidation) {
