@@ -4,8 +4,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/iotaledger/hive.go/kvstore"
-	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	"github.com/iotaledger/hive.go/serializer/v2"
+	"github.com/iotaledger/hive.go/serializer/v2/marshalutil"
 	iotago "github.com/iotaledger/iota.go/v3"
 )
 
@@ -904,9 +904,5 @@ func (pm *Manager) clearStorageForEventID(eventID EventID) error {
 	}
 
 	// Clean up old database keys
-	if err := pm.participationStore.DeletePrefix([]byte{ParticipationStoreKeyPrefixStakingAddress}); err != nil {
-		return err
-	}
-
-	return nil
+	return pm.participationStore.DeletePrefix([]byte{ParticipationStoreKeyPrefixStakingAddress})
 }

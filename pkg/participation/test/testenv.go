@@ -132,7 +132,7 @@ func NewParticipationTestEnv(t *testing.T, wallet1Balance uint64, wallet2Balance
 		func() *iotago.ProtocolParameters {
 			return te.ProtocolParameters()
 		},
-		func(ctx context.Context) (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
+		func() (confirmedIndex iotago.MilestoneIndex, pruningIndex iotago.MilestoneIndex) {
 			return te.SyncManager().ConfirmedMilestoneIndex(), 0
 		},
 		func(ctx context.Context, blockID iotago.BlockID) (*participation.ParticipationBlock, error) {

@@ -20,7 +20,7 @@ type Participation struct {
 	Answers []byte
 }
 
-func (p *Participation) Deserialize(data []byte, deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) (int, error) {
+func (p *Participation) Deserialize(data []byte, _ serializer.DeSerializationMode, _ interface{}) (int, error) {
 	return serializer.NewDeserializer(data).
 		ReadBytesInPlace(p.EventID[:], func(err error) error {
 			return fmt.Errorf("unable to deserialize eventID in participation: %w", err)
@@ -31,7 +31,7 @@ func (p *Participation) Deserialize(data []byte, deSeriMode serializer.DeSeriali
 		Done()
 }
 
-func (p *Participation) Serialize(deSeriMode serializer.DeSerializationMode, deSeriCtx interface{}) ([]byte, error) {
+func (p *Participation) Serialize(_ serializer.DeSerializationMode, _ interface{}) ([]byte, error) {
 	return serializer.NewSerializer().
 		WriteBytes(p.EventID[:], func(err error) error {
 			return fmt.Errorf("unable to serialize eventID in participation: %w", err)

@@ -11,7 +11,6 @@ import (
 
 	"github.com/iotaledger/hive.go/app"
 	"github.com/iotaledger/hive.go/app/shutdown"
-	"github.com/iotaledger/hive.go/kvstore/database"
 	hivedb "github.com/iotaledger/hive.go/kvstore/database"
 	hornetdb "github.com/iotaledger/hornet/v2/pkg/database"
 	"github.com/iotaledger/inx-app/pkg/httpserver"
@@ -62,7 +61,7 @@ func provide(c *dig.Container) error {
 
 	return c.Provide(func(deps participationDeps) *participation.Manager {
 
-		dbEngine, err := database.EngineFromStringAllowed(ParamsParticipation.Database.Engine, AllowedEnginesStorageAuto)
+		dbEngine, err := hivedb.EngineFromStringAllowed(ParamsParticipation.Database.Engine, AllowedEnginesStorageAuto)
 		if err != nil {
 			Component.LogErrorAndExit(err)
 		}
